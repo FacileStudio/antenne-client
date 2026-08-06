@@ -93,7 +93,6 @@ asymmetries today, all of them real rather than accidental:
 
 | Behavior | TypeScript | Go |
 |---|---|---|
-| Keepalive `ping` | not sent | every 30 s |
 | Disable reconnection | `reconnect: false` | not available |
 | Read the connection epoch | `currentEpoch` getter | stored, not exported |
 | Handler throws or panics | reported via `onError` | not recovered; kills the read loop |

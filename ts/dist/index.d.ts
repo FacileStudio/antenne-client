@@ -56,6 +56,7 @@ export declare class PoolClient {
     private _onError?;
     private pendingMessages;
     private reconnectTimer;
+    private pingTimer;
     constructor(options: PoolClientOptions);
     connect(): Promise<void>;
     disconnect(): Promise<void>;
@@ -68,6 +69,8 @@ export declare class PoolClient {
     private register;
     private openWebSocket;
     private handleMessage;
+    private startPinging;
+    private stopPinging;
     private scheduleReconnect;
 }
 export {};

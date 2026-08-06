@@ -110,6 +110,7 @@ export class PoolClient {
   private _onError?: (error: Error) => void;
   private pendingMessages: string[] = [];
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private pingTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(options: PoolClientOptions) {
     if (options.config) {
@@ -135,6 +136,7 @@ export class PoolClient {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+    this.stopPinging();
     if (this.ws) {
       this.ws.close(1000, "client disconnect");
       this.ws = null;
@@ -257,6 +259,7 @@ export class PoolClient {
         }
         this.pendingMessages = [];
 
+        this.startPinging();
         this._onConnect?.();
         resolve();
       };
@@ -268,6 +271,7 @@ export class PoolClient {
       this.ws.onclose = (event) => {
         const wasConnected = this.connected;
         this.connected = false;
+        this.stopPinging();
 
         if (wasConnected) {
           this._onDisconnect?.();
@@ -348,6 +352,21 @@ export class PoolClient {
 
       case "pong":
         break;
+    }
+  }
+
+  private startPinging(): void {
+    this.stopPinging();
+    this.pingTimer = setInterval(() => {
+      if (this.ws?.readyState !== 1) return;
+      this.ws.send(JSON.stringify({ type: "ping" }));
+    }, 30_000);
+  }
+
+  private stopPinging(): void {
+    if (this.pingTimer) {
+      clearInterval(this.pingTimer);
+      this.pingTimer = null;
     }
   }
 
