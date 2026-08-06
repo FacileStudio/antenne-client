@@ -49,6 +49,7 @@ export class PoolClient {
         this.reconnectAttempt = 0;
         this.pendingMessages = [];
         this.reconnectTimer = null;
+        this.pingTimer = null;
         if (options.config) {
             this.config = options.config;
         }
@@ -71,6 +72,7 @@ export class PoolClient {
             clearTimeout(this.reconnectTimer);
             this.reconnectTimer = null;
         }
+        this.stopPinging();
         if (this.ws) {
             this.ws.close(1000, "client disconnect");
             this.ws = null;
@@ -173,6 +175,7 @@ export class PoolClient {
                     this.ws.send(msg);
                 }
                 this.pendingMessages = [];
+                this.startPinging();
                 this._onConnect?.();
                 resolve();
             };
@@ -182,6 +185,7 @@ export class PoolClient {
             this.ws.onclose = (event) => {
                 const wasConnected = this.connected;
                 this.connected = false;
+                this.stopPinging();
                 if (wasConnected) {
                     this._onDisconnect?.();
                 }
@@ -245,6 +249,20 @@ export class PoolClient {
             }
             case "pong":
                 break;
+        }
+    }
+    startPinging() {
+        this.stopPinging();
+        this.pingTimer = setInterval(() => {
+            if (this.ws?.readyState !== 1)
+                return;
+            this.ws.send(JSON.stringify({ type: "ping" }));
+        }, 30000);
+    }
+    stopPinging() {
+        if (this.pingTimer) {
+            clearInterval(this.pingTimer);
+            this.pingTimer = null;
         }
     }
     scheduleReconnect() {

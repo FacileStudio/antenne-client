@@ -49,7 +49,7 @@ Every message is JSON over a text WebSocket frame.
 | `subscribe` | `channels: { <channel>: { last_offset } }` | Once, immediately on open |
 | `event` | `id`, `channel`, `payload`, `timestamp` | On `emit` / `emitNow` |
 | `ack` | `channel`, `offset` | After every inbound event is dispatched |
-| `ping` | — | Go only, every 30 s |
+| `ping` | — | Every 30 s, in both clients |
 
 **Server to client**
 
@@ -59,6 +59,14 @@ Every message is JSON over a text WebSocket frame.
 | `event` | `id`, `channel`, `offset`, `timestamp`, `sender`, `payload` | Dispatched, then acked |
 | `error` | `code`, `message` | Surfaced through the error callback |
 | `pong` | — | Ignored |
+
+Underneath those, the server sends a WebSocket **ping control frame** every 20 seconds and
+drops a connection that has been silent for 60. Neither client implements that handshake:
+every WebSocket stack answers a ping with a pong on its own, below the API. It exists because
+a pool socket carries nothing at all while a suite is quiet, and the proxies in front of a
+deployed Nook cull an idle connection — Cloudflare at around 100 seconds. The clients' own
+30-second `ping` is the same defence from the other side, for a pool server that predates the
+control-frame keepalive.
 
 `id` on an outbound event is a fresh random identifier — `crypto.randomUUID()` in TypeScript,
 16 random bytes hex-encoded in Go. `timestamp` is epoch milliseconds. Anything the server
