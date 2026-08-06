@@ -24,6 +24,10 @@ import (
 // ErrNotConnected is returned by EmitNow when no live connection exists.
 var ErrNotConnected = errors.New("pool: not connected")
 
+// ErrClosed is returned when a disconnected client is asked to connect again.
+// Disconnect is terminal: build a new client instead.
+var ErrClosed = errors.New("pool: client is closed")
+
 type Config struct {
 	App        string      `yaml:"app" json:"app"`
 	Instance   string      `yaml:"instance" json:"instance"`
@@ -108,7 +112,7 @@ type Client struct {
 	appID            string
 	epoch            string
 	connected        bool
-	shouldReconnect  bool
+	closed           bool
 	maxReconnect     int
 	reconnectAttempt int
 	handlers         map[string][]EventHandler
@@ -116,6 +120,7 @@ type Client struct {
 	mu               sync.RWMutex
 	writeMu          sync.Mutex
 	done             chan struct{}
+	closeOnce        sync.Once
 	onConnect        func()
 	onDisconnect     func()
 	onError          func(error)
@@ -124,12 +129,11 @@ type Client struct {
 
 func NewClient(config *Config, opts ...ClientOption) *Client {
 	c := &Client{
-		config:          config,
-		shouldReconnect: true,
-		maxReconnect:    20,
-		handlers:        make(map[string][]EventHandler),
-		offsets:         make(map[string]int64),
-		done:            make(chan struct{}),
+		config:       config,
+		maxReconnect: 20,
+		handlers:     make(map[string][]EventHandler),
+		offsets:      make(map[string]int64),
+		done:         make(chan struct{}),
 	}
 	for _, opt := range opts {
 		opt(c)
@@ -146,6 +150,9 @@ func NewClientFromYAML(path string, opts ...ClientOption) (*Client, error) {
 }
 
 func (c *Client) Connect(ctx context.Context) error {
+	if c.isClosed() {
+		return ErrClosed
+	}
 	if err := c.register(ctx); err != nil {
 		return fmt.Errorf("registration failed: %w", err)
 	}
@@ -155,13 +162,20 @@ func (c *Client) Connect(ctx context.Context) error {
 	return nil
 }
 
+// Disconnect closes the connection for good. It is terminal and idempotent: no
+// reconnect already in flight may outlive it. A client that could resurrect
+// itself after being discarded would re-register under the same identity and
+// evict whichever connection its replacement had opened, and the two would then
+// take turns kicking each other off the pool.
 func (c *Client) Disconnect() {
 	c.mu.Lock()
-	c.shouldReconnect = false
 	conn := c.conn
 	c.connected = false
+	c.closed = true
 	c.conn = nil
 	c.mu.Unlock()
+
+	c.closeOnce.Do(func() { close(c.done) })
 
 	if conn != nil {
 		c.writeMu.Lock()
@@ -170,11 +184,12 @@ func (c *Client) Disconnect() {
 		c.writeMu.Unlock()
 		conn.Close()
 	}
+}
 
-	select {
-	case c.done <- struct{}{}:
-	default:
-	}
+func (c *Client) isClosed() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.closed
 }
 
 func (c *Client) Emit(channel string, payload any) error {
@@ -322,6 +337,11 @@ func (c *Client) openWebSocket(ctx context.Context) error {
 	}
 
 	c.mu.Lock()
+	if c.closed {
+		c.mu.Unlock()
+		conn.Close()
+		return ErrClosed
+	}
 	c.conn = conn
 	c.connected = true
 	c.reconnectAttempt = 0
@@ -373,12 +393,13 @@ func (c *Client) readLoop() {
 		if err != nil {
 			c.mu.Lock()
 			c.connected = false
+			closed := c.closed
 			c.mu.Unlock()
 
 			if c.onDisconnect != nil {
 				c.onDisconnect()
 			}
-			if c.shouldReconnect {
+			if !closed {
 				go c.scheduleReconnect()
 			}
 			return
@@ -487,8 +508,12 @@ func (c *Client) scheduleReconnect() {
 	c.mu.RLock()
 	attempt := c.reconnectAttempt
 	maxReconnect := c.maxReconnect
+	closed := c.closed
 	c.mu.RUnlock()
 
+	if closed {
+		return
+	}
 	if attempt >= maxReconnect {
 		if c.onError != nil {
 			c.onError(fmt.Errorf("max reconnection attempts reached"))
@@ -505,7 +530,16 @@ func (c *Client) scheduleReconnect() {
 	c.reconnectAttempt++
 	c.mu.Unlock()
 
-	time.Sleep(delay)
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+	case <-c.done:
+		return
+	}
+	if c.isClosed() {
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
