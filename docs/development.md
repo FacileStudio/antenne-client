@@ -7,7 +7,7 @@ Local setup for both halves, the branch layout that distribution depends on, and
 
 - **Bun**, for the TypeScript half. `ts/bun.lock` is committed.
 - **Go 1.24.** `go/go.mod` declares `go 1.24.0`.
-- A reachable **Nook** instance to test against anything real. There is no mock server in this
+- A reachable **Antenne** instance to test against anything real. There is no mock server in this
   repo.
 
 ## Setup
@@ -55,8 +55,8 @@ surfaces for the same repo.
 
 | Branch | Holds | Consumed as |
 |---|---|---|
-| `main` | `ts/`, `go/`, `docs/`, `README.md`, `CLAUDE.md` | `go get github.com/FacileStudio/pool/go` |
-| `ts` | the **contents** of `ts/` at the root | `bun add github:FacileStudio/pool#ts` |
+| `main` | `ts/`, `go/`, `docs/`, `README.md`, `CLAUDE.md` | `go get github.com/FacileStudio/antenne-client/go` |
+| `ts` | the **contents** of `ts/` at the root | `bun add github:FacileStudio/antenne-client#ts` |
 
 There is no `go` branch. The Go module path ends in `/go`, so the toolchain resolves the
 subdirectory from the default branch directly.
@@ -79,7 +79,7 @@ publish**:
   lockfile.
 - A push to `main` does not move Go consumers, which pin a pseudo-version of a specific commit
   (`v0.0.0-20260703193105-683b8b5581af` in both Sablier and Mycelium). They update deliberately,
-  with `go get github.com/FacileStudio/pool/go@<commit>`.
+  with `go get github.com/FacileStudio/antenne-client/go@<commit>`.
 
 The asymmetry is worth internalizing: the same change is instant for TypeScript consumers and
 opt-in for Go ones. `ts/package.json` carries `"version": "0.1.0"` and has not moved; it is not

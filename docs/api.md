@@ -5,7 +5,7 @@ The complete exported surface of both implementations. Protocol behavior lives i
 
 ## TypeScript
 
-Import from `@facile/pool`. Seven exports.
+Import from `@facile/antenne`. Seven exports.
 
 ### Types
 
@@ -82,7 +82,7 @@ and routed to `onError`; the remaining handlers still run, and the event is stil
 
 ## Go
 
-Import as `pool "github.com/FacileStudio/pool/go"`. Fourteen top-level exports.
+Import as `pool "github.com/FacileStudio/antenne-client/go"`. Fourteen top-level exports.
 
 ### Types
 

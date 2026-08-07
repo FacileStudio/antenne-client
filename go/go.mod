@@ -1,4 +1,4 @@
-module github.com/FacileStudio/pool/go
+module github.com/FacileStudio/antenne-client/go
 
 go 1.24.0
 

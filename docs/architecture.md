@@ -1,6 +1,6 @@
 # pool — Architecture
 
-The wire protocol between a Facile app and a Nook instance, how the client keeps the
+The wire protocol between a Facile app and a Antenne instance, how the client keeps the
 connection alive, and how the two language halves are distributed.
 
 ## Runtime topology
@@ -8,15 +8,15 @@ connection alive, and how the two language halves are distributed.
 ```
 Opus (TS)      ─┐
 Sablier (Go)   ─┤
-Mycelium (Go)    ─┼──▶ POST <instance>/api/pool/register  ──▶ Nook
+Mycelium (Go)    ─┼──▶ POST <instance>/api/pool/register  ──▶ Antenne
                 │        └── { token, app_id }
                 │
-                └──▶ WS  <instance>/api/pool/ws?token=…  ◀──▶ Nook Pool
+                └──▶ WS  <instance>/api/pool/ws?token=…  ◀──▶ Antenne
                             client ──▶ subscribe, event, ack, ping
                             client ◀── welcome, event, error, pong
 ```
 
-No app connects to another app. Every edge in this picture terminates at Nook, which is the
+No app connects to another app. Every edge in this picture terminates at Antenne, which is the
 whole point of the architecture: adding an app adds one edge, not N.
 
 ## Connection lifecycle
@@ -64,7 +64,7 @@ Underneath those, the server sends a WebSocket **ping control frame** every 20 s
 drops a connection that has been silent for 60. Neither client implements that handshake:
 every WebSocket stack answers a ping with a pong on its own, below the API. It exists because
 a pool socket carries nothing at all while a suite is quiet, and the proxies in front of a
-deployed Nook cull an idle connection — Cloudflare at around 100 seconds. The clients' own
+deployed Antenne cull an idle connection — Cloudflare at around 100 seconds. The clients' own
 30-second `ping` is the same defence from the other side, for a pool server that predates the
 control-frame keepalive.
 
@@ -131,7 +131,7 @@ shared package. Neither half goes through a registry.
 **TypeScript — a git branch, not a registry.**
 
 ```json
-"@facile/pool": "github:FacileStudio/pool#ts"
+"@facile/antenne": "github:FacileStudio/antenne-client#ts"
 ```
 
 That is Opus's `apps/api/package.json`, verbatim. The `ts` branch holds the **contents** of
@@ -146,13 +146,13 @@ Changes to the TypeScript client are effectively published the moment they land 
 **Go — a commit, from the default branch.**
 
 ```
-require github.com/FacileStudio/pool/go v0.0.0-20260703193105-683b8b5581af
+require github.com/FacileStudio/antenne-client/go v0.0.0-20260703193105-683b8b5581af
 ```
 
 The module path includes the `go/` subdirectory, so the Go toolchain resolves it from `main` —
 there is no `go` branch. There are no semver tags either, so consumers pin the pseudo-version
 of a specific commit. Sablier and Mycelium are both on `683b8b5`. Updating is
-`go get github.com/FacileStudio/pool/go@<commit>` and a review of the diff, not a version bump.
+`go get github.com/FacileStudio/antenne-client/go@<commit>` and a review of the diff, not a version bump.
 
 Both distribution paths mean **a push to `main` or `ts` is a release**. See
 [development.md](development.md#releasing).

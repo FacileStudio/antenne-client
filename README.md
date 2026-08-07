@@ -1,13 +1,13 @@
-# pool
+# antenne-client
 
-Client library for connecting Facile Suite apps to the Nook Pool event bus. Ships two
-implementations of one protocol: TypeScript (`@facile/pool`) and Go.
+Client library for connecting Facile Suite apps to the Antenne event bus. Ships two
+implementations of one protocol: TypeScript (`@facile/antenne`) and Go.
 
-Apps do not talk to each other. Each one talks to Nook, and `pool` is the wire.
+Apps do not talk to each other. Each one talks to Antenne, and `antenne-client` is the wire.
 
 ## What it does
 
-- Registers an app with a Nook instance over HTTP, then holds a WebSocket to it
+- Registers an app with an Antenne instance over HTTP, then holds a WebSocket to it
 - Emits events on named channels and dispatches inbound ones to per-channel handlers
 - Filters out an app's own events, so emitting and listening on the same channel is safe
 - Tracks a per-channel offset and replays from it on reconnect
@@ -27,11 +27,11 @@ There is no npm registry and no Go module proxy tag behind this. Both halves are
 straight from GitHub — see [docs/architecture.md](docs/architecture.md#cross-repo-consumption).
 
 ```sh
-bun add github:FacileStudio/pool#ts
+bun add github:FacileStudio/antenne-client#ts
 ```
 
 ```ts
-import { PoolClient } from "@facile/pool";
+import { PoolClient } from "@facile/antenne";
 
 const pool = new PoolClient({
   config: {
@@ -55,11 +55,11 @@ pool.listen("project.created", (payload, meta) => {
 ```
 
 ```sh
-go get github.com/FacileStudio/pool/go
+go get github.com/FacileStudio/antenne-client/go
 ```
 
 ```go
-import pool "github.com/FacileStudio/pool/go"
+import pool "github.com/FacileStudio/antenne-client/go"
 
 client := pool.NewClient(&pool.Config{
 	App:      "sablier",
@@ -86,7 +86,7 @@ Configuration is passed inline or loaded from a `nook.yaml` at the project root.
 | Key | Required | What it does |
 |---|---|---|
 | `app` | yes | App name; the pool identity and the sender on every event it emits |
-| `instance` | yes | Nook base URL, `http://` or `https://`; the WebSocket URL is derived from it |
+| `instance` | yes | Antenne base URL, `http://` or `https://`; the WebSocket URL is derived from it |
 | `secret` | yes | Shared secret sent at registration |
 | `instance_id` | no | Makes the identity `app:instance_id`, so several instances share one pool |
 | `events.emit` | no | Documented emit channels |
