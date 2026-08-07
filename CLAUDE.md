@@ -1,22 +1,22 @@
 # Pool
 
-Client library for the Nook Pool event bus. Dual implementation: TypeScript (`ts/`) and Go (`go/`).
+Client library for the Antenne event bus. Dual implementation: TypeScript (`ts/`) and Go (`go/`).
 
 ## Architecture
 
-Pool connects Facile Suite apps to Nook via WebSocket for real-time event sync. The client handles:
-- Registration with Nook (HTTP POST)
+Pool connects Facile Suite apps to Antenne via WebSocket for real-time event sync. The client handles:
+- Registration with Antenne (HTTP POST)
 - WebSocket connection with auto-reconnect (exponential backoff + jitter)
 - Event emission and listening
 - Offset tracking for replay on reconnect
-- nook.yaml config file auto-detection
+- antenne.yaml config file auto-detection
 
 ## Conventions
 
 - TypeScript source in `ts/src/`, compiled output committed to `ts/dist/`
 - Go source in `go/`
 - Both implementations follow the same protocol and API shape
-- Consumers install from GitHub: `bun add github:FacileStudio/pool#ts` or `go get github.com/FacileStudio/pool/go`
+- Consumers install from GitHub: `bun add github:FacileStudio/antenne-client#ts` or `go get github.com/FacileStudio/antenne-client/go`
 
 ## Protocol
 
