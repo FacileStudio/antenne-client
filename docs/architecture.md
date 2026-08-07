@@ -162,7 +162,7 @@ Both distribution paths mean **a push to `main` or `ts` is a release**. See
 | App | Language | Where the client is wired |
 |---|---|---|
 | Opus | TypeScript | `apps/api/src/nook-pool/` |
-| Sablier | Go | `apps/api/modules/nookpool/` |
+| Sablier | Go | `apps/api/modules/antenne/` |
 | Mycelium | Go | `internal/server/emitter.go` |
 
 Each keeps a `antenne.yaml` at its repo root documenting the channels it uses, even though all
