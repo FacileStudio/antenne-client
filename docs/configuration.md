@@ -9,15 +9,15 @@ two.
 | Key | Type | Required | What it does |
 |---|---|---|---|
 | `app` | string | yes | App name. Becomes the pool identity and the `sender` on emitted events |
-| `instance` | string | yes | Nook base URL. The WebSocket URL replaces the first `http` with `ws` |
+| `instance` | string | yes | Antenne base URL. The WebSocket URL replaces the first `http` with `ws` |
 | `secret` | string | yes | Shared secret, sent in the registration body |
 | `instance_id` | string | no | Makes the identity `app:instance_id` |
 | `events.emit` | string[] | no | Channels the app emits on. **Never read by the client** |
 | `events.listen` | string[] | no | Channels subscribed on connect |
 
-Both `events.emit` and `events.listen` are forwarded verbatim in the registration body, so Nook
+Both `events.emit` and `events.listen` are forwarded verbatim in the registration body, so Antenne
 sees the full declaration. Only `events.listen` has a client-side effect: it seeds the
-`subscribe` message. `events.emit` is documentation for Nook and for humans — nothing in the
+`subscribe` message. `events.emit` is documentation for Antenne and for humans — nothing in the
 client validates an emit against it, so emitting on an undeclared channel is not a client-side
 error.
 
