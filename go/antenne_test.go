@@ -1,4 +1,4 @@
-package pool
+package antenne
 
 import (
 	"net/http"
@@ -12,7 +12,7 @@ func registerCounter(t *testing.T) (*httptest.Server, *atomic.Int64) {
 	t.Helper()
 	var hits atomic.Int64
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/api/pool/register" {
+		if r.URL.Path == "/api/antenne/register" {
 			hits.Add(1)
 			w.Header().Set("Content-Type", "application/json")
 			w.Write([]byte(`{"token":"t","app_id":"a"}`))

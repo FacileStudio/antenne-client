@@ -1,4 +1,4 @@
-package pool
+package antenne
 
 import (
 	"bytes"
@@ -22,11 +22,11 @@ import (
 )
 
 // ErrNotConnected is returned by EmitNow when no live connection exists.
-var ErrNotConnected = errors.New("pool: not connected")
+var ErrNotConnected = errors.New("antenne: not connected")
 
 // ErrClosed is returned when a disconnected client is asked to connect again.
 // Disconnect is terminal: build a new client instead.
-var ErrClosed = errors.New("pool: client is closed")
+var ErrClosed = errors.New("antenne: client is closed")
 
 type Config struct {
 	App        string      `yaml:"app" json:"app"`
@@ -45,7 +45,7 @@ func LoadConfig(path string) (*Config, error) {
 	if path == "" {
 		found := findConfigFile()
 		if found == "" {
-			return nil, fmt.Errorf("no nook.yaml found")
+			return nil, fmt.Errorf("no antenne.yaml found")
 		}
 		path = found
 	}
@@ -64,12 +64,12 @@ func LoadConfig(path string) (*Config, error) {
 }
 
 func findConfigFile() string {
-	for _, name := range []string{"nook.yaml", "nook.yml"} {
+	for _, name := range []string{"antenne.yaml", "antenne.yml"} {
 		if _, err := os.Stat(name); err == nil {
 			return name
 		}
 	}
-	if p := os.Getenv("NOOK_CONFIG_PATH"); p != "" {
+	if p := os.Getenv("ANTENNE_CONFIG_PATH"); p != "" {
 		if _, err := os.Stat(p); err == nil {
 			return p
 		}
@@ -290,7 +290,7 @@ func (c *Client) Identity() string {
 }
 
 func (c *Client) register(ctx context.Context) error {
-	regURL := c.config.Instance + "/api/pool/register"
+	regURL := c.config.Instance + "/api/antenne/register"
 	body, _ := json.Marshal(map[string]any{
 		"app":         c.config.App,
 		"instance_id": c.config.InstanceID,
@@ -329,7 +329,7 @@ func (c *Client) register(ctx context.Context) error {
 
 func (c *Client) openWebSocket(ctx context.Context) error {
 	wsURL := strings.Replace(c.config.Instance, "http", "ws", 1) +
-		"/api/pool/ws?token=" + url.QueryEscape(c.token)
+		"/api/antenne/ws?token=" + url.QueryEscape(c.token)
 
 	conn, _, err := websocket.DefaultDialer.DialContext(ctx, wsURL, nil)
 	if err != nil {

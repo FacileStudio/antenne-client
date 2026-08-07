@@ -31,9 +31,9 @@ bun add github:FacileStudio/antenne-client#ts
 ```
 
 ```ts
-import { PoolClient } from "@facile/antenne";
+import { AntenneClient } from "@facile/antenne";
 
-const pool = new PoolClient({
+const pool = new AntenneClient({
   config: {
     app: "opus",
     instance: "http://localhost:3400",
@@ -81,7 +81,7 @@ client.Listen("project.created", func(payload json.RawMessage, meta pool.EventMe
 
 ## Configuration
 
-Configuration is passed inline or loaded from a `nook.yaml` at the project root.
+Configuration is passed inline or loaded from a `antenne.yaml` at the project root.
 
 | Key | Required | What it does |
 |---|---|---|
@@ -92,7 +92,7 @@ Configuration is passed inline or loaded from a `nook.yaml` at the project root.
 | `events.emit` | no | Documented emit channels |
 | `events.listen` | no | Channels subscribed on connect, before any handler is registered |
 
-Full reference, including `NOOK_CONFIG_PATH` and the `loadConfig` / `loadManifest` split:
+Full reference, including `ANTENNE_CONFIG_PATH` and the `loadConfig` / `loadManifest` split:
 [docs/configuration.md](docs/configuration.md).
 
 ## Structure
