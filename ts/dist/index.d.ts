@@ -1,4 +1,4 @@
-export interface PoolConfig {
+export interface AntenneConfig {
     app: string;
     instance: string;
     secret: string;
@@ -8,7 +8,7 @@ export interface PoolConfig {
         listen?: string[];
     };
 }
-export interface PoolManifest {
+export interface AntenneManifest {
     app: string;
     instance?: string;
     secret?: string;
@@ -18,8 +18,8 @@ export interface PoolManifest {
         listen?: string[];
     };
 }
-export interface PoolClientOptions {
-    config?: PoolConfig;
+export interface AntenneClientOptions {
+    config?: AntenneConfig;
     configPath?: string;
     onConnect?: () => void;
     onDisconnect?: () => void;
@@ -36,9 +36,9 @@ export interface EventMeta {
 }
 type EventHandler<T = unknown> = (payload: T, meta: EventMeta) => void | Promise<void>;
 type Unsubscribe = () => void;
-export declare function loadConfig(path?: string): PoolConfig;
-export declare function loadManifest(path?: string): PoolManifest;
-export declare class PoolClient {
+export declare function loadConfig(path?: string): AntenneConfig;
+export declare function loadManifest(path?: string): AntenneManifest;
+export declare class AntenneClient {
     private config;
     private ws;
     private handlers;
@@ -57,7 +57,7 @@ export declare class PoolClient {
     private pendingMessages;
     private reconnectTimer;
     private pingTimer;
-    constructor(options: PoolClientOptions);
+    constructor(options: AntenneClientOptions);
     connect(): Promise<void>;
     disconnect(): Promise<void>;
     emit<T = unknown>(channel: string, payload: T): void;

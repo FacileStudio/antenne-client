@@ -5,12 +5,12 @@ The complete exported surface of both implementations. Protocol behavior lives i
 
 ## TypeScript
 
-Import from `@facile/pool`. Seven exports.
+Import from `@facile/antenne`. Seven exports.
 
 ### Types
 
 ```ts
-export interface PoolConfig {
+export interface AntenneConfig {
   app: string;
   instance: string;
   secret: string;
@@ -18,7 +18,7 @@ export interface PoolConfig {
   events?: { emit?: string[]; listen?: string[] };
 }
 
-export interface PoolManifest {
+export interface AntenneManifest {
   app: string;
   instance?: string;
   secret?: string;
@@ -26,8 +26,8 @@ export interface PoolManifest {
   events?: { emit?: string[]; listen?: string[] };
 }
 
-export interface PoolClientOptions {
-  config?: PoolConfig;
+export interface AntenneClientOptions {
+  config?: AntenneConfig;
   configPath?: string;
   onConnect?: () => void;
   onDisconnect?: () => void;
@@ -54,15 +54,15 @@ an async handler is unhandled, not routed to `onError`.
 
 | Function | Signature | Behavior |
 |---|---|---|
-| `loadManifest` | `loadManifest(path?: string): PoolManifest` | Reads the YAML and validates only that `app` is a non-empty string |
-| `loadConfig` | `loadConfig(path?: string): PoolConfig` | `loadManifest`, then requires `instance` and `secret` |
+| `loadManifest` | `loadManifest(path?: string): AntenneManifest` | Reads the YAML and validates only that `app` is a non-empty string |
+| `loadConfig` | `loadConfig(path?: string): AntenneConfig` | `loadManifest`, then requires `instance` and `secret` |
 
-Both throw when no path is given and no `nook.yaml` / `nook.yml` is found in the working
-directory and `NOOK_CONFIG_PATH` does not resolve.
+Both throw when no path is given and no `antenne.yaml` / `antenne.yml` is found in the working
+directory and `ANTENNE_CONFIG_PATH` does not resolve.
 
-### `PoolClient`
+### `AntenneClient`
 
-`new PoolClient(options: PoolClientOptions)` — with no `options.config`, the constructor calls
+`new AntenneClient(options: AntenneClientOptions)` — with no `options.config`, the constructor calls
 `loadConfig(options.configPath)` and therefore **throws synchronously** if the file is missing
 or incomplete.
 
@@ -82,7 +82,7 @@ and routed to `onError`; the remaining handlers still run, and the event is stil
 
 ## Go
 
-Import as `pool "github.com/FacileStudio/pool/go"`. Fourteen top-level exports.
+Import as `pool "github.com/FacileStudio/antenne-client/go"`. Fourteen top-level exports.
 
 ### Types
 
