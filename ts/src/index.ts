@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { parse as parseYaml } from "yaml";
 
-export interface PoolConfig {
+export interface AntenneConfig {
   app: string;
   instance: string;
   secret: string;
@@ -13,7 +13,7 @@ export interface PoolConfig {
   };
 }
 
-export interface PoolManifest {
+export interface AntenneManifest {
   app: string;
   instance?: string;
   secret?: string;
@@ -24,8 +24,8 @@ export interface PoolManifest {
   };
 }
 
-export interface PoolClientOptions {
-  config?: PoolConfig;
+export interface AntenneClientOptions {
+  config?: AntenneConfig;
   configPath?: string;
   onConnect?: () => void;
   onDisconnect?: () => void;
@@ -48,18 +48,18 @@ type EventHandler<T = unknown> = (
 ) => void | Promise<void>;
 type Unsubscribe = () => void;
 
-export function loadConfig(path?: string): PoolConfig {
+export function loadConfig(path?: string): AntenneConfig {
   const manifest = loadManifest(path);
   if (!manifest.instance || !manifest.secret) {
     throw new Error(
-      "nook.yaml: 'instance' and 'secret' are required for full config. Use loadManifest() for YAML without connection details.",
+      "antenne.yaml: 'instance' and 'secret' are required for full config. Use loadManifest() for YAML without connection details.",
     );
   }
-  return manifest as PoolConfig;
+  return manifest as AntenneConfig;
 }
 
 function findConfigFile(): string | null {
-  const candidates = ["nook.yaml", "nook.yml"];
+  const candidates = ["antenne.yaml", "antenne.yml"];
   const dir = process.cwd();
 
   for (const name of candidates) {
@@ -67,33 +67,33 @@ function findConfigFile(): string | null {
     if (existsSync(full)) return full;
   }
 
-  const envPath = process.env.NOOK_CONFIG_PATH;
+  const envPath = process.env.ANTENNE_CONFIG_PATH;
   if (envPath && existsSync(envPath)) return envPath;
 
   return null;
 }
 
-function validateConfig(config: unknown): asserts config is PoolManifest {
+function validateConfig(config: unknown): asserts config is AntenneManifest {
   const c = config as Record<string, unknown>;
   if (!c.app || typeof c.app !== "string")
-    throw new Error("nook.yaml: 'app' is required");
+    throw new Error("antenne.yaml: 'app' is required");
 }
 
-export function loadManifest(path?: string): PoolManifest {
+export function loadManifest(path?: string): AntenneManifest {
   const configPath = path || findConfigFile();
   if (!configPath) {
     throw new Error(
-      "No nook.yaml found. Provide a config path or inline config.",
+      "No antenne.yaml found. Provide a config path or inline config.",
     );
   }
   const content = readFileSync(configPath, "utf-8");
   const parsed = parseYaml(content);
   validateConfig(parsed);
-  return parsed as PoolManifest;
+  return parsed as AntenneManifest;
 }
 
-export class PoolClient {
-  private config: PoolConfig;
+export class AntenneClient {
+  private config: AntenneConfig;
   private ws: WebSocket | null = null;
   private handlers: Map<string, Set<EventHandler>> = new Map();
   private offsets: Map<string, number> = new Map();
@@ -112,7 +112,7 @@ export class PoolClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private pingTimer: ReturnType<typeof setInterval> | null = null;
 
-  constructor(options: PoolClientOptions) {
+  constructor(options: AntenneClientOptions) {
     if (options.config) {
       this.config = options.config;
     } else {
@@ -206,7 +206,7 @@ export class PoolClient {
   }
 
   private async register(): Promise<void> {
-    const url = `${this.config.instance}/api/pool/register`;
+    const url = `${this.config.instance}/api/antenne/register`;
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -220,7 +220,7 @@ export class PoolClient {
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`Pool registration failed: ${res.status} ${text}`);
+      throw new Error(`Antenne registration failed: ${res.status} ${text}`);
     }
 
     const data = (await res.json()) as { token: string; app_id: string };
@@ -232,7 +232,7 @@ export class PoolClient {
     return new Promise((resolve, reject) => {
       const wsUrl =
         this.config.instance.replace(/^http/, "ws") +
-        `/api/pool/ws?token=${encodeURIComponent(this.token)}`;
+        `/api/antenne/ws?token=${encodeURIComponent(this.token)}`;
 
       this.ws = new WebSocket(wsUrl);
 
@@ -344,7 +344,7 @@ export class PoolClient {
       case "error": {
         this._onError?.(
           new Error(
-            `Pool error [${msg.code}]: ${msg.message}`,
+            `Antenne error [${msg.code}]: ${msg.message}`,
           ),
         );
         break;

@@ -9,7 +9,7 @@ Pool connects Facile Suite apps to Antenne via WebSocket for real-time event syn
 - WebSocket connection with auto-reconnect (exponential backoff + jitter)
 - Event emission and listening
 - Offset tracking for replay on reconnect
-- nook.yaml config file auto-detection
+- antenne.yaml config file auto-detection
 
 ## Conventions
 

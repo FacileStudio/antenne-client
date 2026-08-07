@@ -25,9 +25,9 @@ error.
 occurrence with `ws`, so `http://` becomes `ws://` and `https://` becomes `wss://`. A schemeless
 value produces a URL the dialer rejects.
 
-## `nook.yaml`
+## `antenne.yaml`
 
-Placed at the project root. Both `nook.yaml` and `nook.yml` are accepted, in that order,
+Placed at the project root. Both `antenne.yaml` and `antenne.yml` are accepted, in that order,
 resolved relative to the **current working directory** — not the module or package directory.
 
 ```yaml
@@ -43,31 +43,31 @@ events:
     - project.updated
 ```
 
-If neither file is found in the working directory, `NOOK_CONFIG_PATH` is consulted and used
+If neither file is found in the working directory, `ANTENNE_CONFIG_PATH` is consulted and used
 when it points at a file that exists.
 
 | Variable | Required | Default | What it does |
 |---|---|---|---|
-| `NOOK_CONFIG_PATH` | no | — | Fallback path to the YAML file, used only when no `nook.yaml`/`nook.yml` is in the working directory |
+| `ANTENNE_CONFIG_PATH` | no | — | Fallback path to the YAML file, used only when no `antenne.yaml`/`antenne.yml` is in the working directory |
 
 ## Full config versus manifest (TypeScript)
 
-TypeScript splits the shape in two, because in practice apps commit a `nook.yaml` that
+TypeScript splits the shape in two, because in practice apps commit a `antenne.yaml` that
 documents channels while injecting connection details from the environment:
 
-- **`PoolConfig`** — `app`, `instance`, `secret` all required. What `PoolClient` needs.
-- **`PoolManifest`** — only `app` required; `instance`, `secret` and `instance_id` optional.
+- **`AntenneConfig`** — `app`, `instance`, `secret` all required. What `AntenneClient` needs.
+- **`AntenneManifest`** — only `app` required; `instance`, `secret` and `instance_id` optional.
 
 `loadManifest(path?)` parses the file and validates only that `app` is a non-empty string.
 `loadConfig(path?)` calls it and then requires `instance` and `secret`, throwing
-`nook.yaml: 'instance' and 'secret' are required for full config` otherwise. Reading a
-channel-only `nook.yaml` therefore needs `loadManifest`, not `loadConfig`.
+`antenne.yaml: 'instance' and 'secret' are required for full config` otherwise. Reading a
+channel-only `antenne.yaml` therefore needs `loadManifest`, not `loadConfig`.
 
 Go has no equivalent split. `LoadConfig(path)` requires `app`, `instance` and `secret`
 together, and fails with `config: app, instance, and secret are required` if any is missing —
 so a Go app cannot load a channel-only manifest through this library.
 
-This is what the three consumers in the suite actually do: their `nook.yaml` carries `app` and
+This is what the three consumers in the suite actually do: their `antenne.yaml` carries `app` and
 `events` only, and the API builds the full config inline in code. Sablier's file says so in a
 comment, and so does Opus's:
 
@@ -87,7 +87,7 @@ check the code when they disagree.
 
 Behavior knobs live on the client, not in the YAML.
 
-| TypeScript (`PoolClientOptions`) | Go (`ClientOption`) | Default | What it does |
+| TypeScript (`AntenneClientOptions`) | Go (`ClientOption`) | Default | What it does |
 |---|---|---|---|
 | `config` | first argument to `NewClient` | — | Inline config; when absent, TS falls back to `loadConfig(configPath)` |
 | `configPath` | `NewClientFromYAML(path, …)` | — | Explicit YAML path |

@@ -8,10 +8,10 @@ connection alive, and how the two language halves are distributed.
 ```
 Opus (TS)      ─┐
 Sablier (Go)   ─┤
-Mycelium (Go)    ─┼──▶ POST <instance>/api/pool/register  ──▶ Antenne
+Mycelium (Go)    ─┼──▶ POST <instance>/api/antenne/register  ──▶ Antenne
                 │        └── { token, app_id }
                 │
-                └──▶ WS  <instance>/api/pool/ws?token=…  ◀──▶ Antenne
+                └──▶ WS  <instance>/api/antenne/ws?token=…  ◀──▶ Antenne
                             client ──▶ subscribe, event, ack, ping
                             client ◀── welcome, event, error, pong
 ```
@@ -23,13 +23,13 @@ whole point of the architecture: adding an app adds one edge, not N.
 
 `connect()` / `Connect(ctx)` is two steps, in order:
 
-1. **Register.** `POST <instance>/api/pool/register` with a JSON body of `app`, `instance_id`,
+1. **Register.** `POST <instance>/api/antenne/register` with a JSON body of `app`, `instance_id`,
    `secret` and `events`. A non-200 fails the connect with the status and the response body
    included in the message. A 200 returns `{ "token": ..., "app_id": ... }`, both kept in
    memory only.
 2. **Open the socket.** The WebSocket URL is the instance URL with `http` replaced by `ws` —
    the first occurrence only, so `https://` becomes `wss://` — plus
-   `/api/pool/ws?token=<url-encoded token>`. The token travels in the query string, which is
+   `/api/antenne/ws?token=<url-encoded token>`. The token travels in the query string, which is
    why every Facile API redacts `token` from its request logs.
 
 On open the client immediately sends one `subscribe` message, then flushes anything queued by
@@ -165,6 +165,6 @@ Both distribution paths mean **a push to `main` or `ts` is a release**. See
 | Sablier | Go | `apps/api/modules/nookpool/` |
 | Mycelium | Go | `internal/server/emitter.go` |
 
-Each keeps a `nook.yaml` at its repo root documenting the channels it uses, even though all
+Each keeps a `antenne.yaml` at its repo root documenting the channels it uses, even though all
 three build their pool config inline in code. The file is documentation that the code is
 expected to match, not the source of truth.
