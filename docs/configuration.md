@@ -73,7 +73,7 @@ comment, and so does Opus's:
 
 ```yaml
 # Documents the pool events Sablier uses. The API builds its pool config
-# inline (modules/nookpool/service.go) — keep this file in sync with it.
+# inline (modules/antenne/service.go) — keep this file in sync with it.
 app: Sablier
 events:
   emit:
