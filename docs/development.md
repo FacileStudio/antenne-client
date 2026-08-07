@@ -35,7 +35,7 @@ There is no `mise.toml`, no `scripts/check.sh`, no lint config and no CI here â€
 predates the suite's chassis conventions and has not been brought onto them. There are also
 **no tests in either half**, which is worth knowing before you change reconnection or offset
 handling: nothing will catch you. The consumers' own suites are the only coverage â€”
-`Sablier/apps/api/modules/nookpool/agent_sessions_test.go` is the closest thing to an
+`Sablier/apps/api/modules/antenne/agent_sessions_test.go` is the closest thing to an
 integration test of this protocol.
 
 ## Committed build output
