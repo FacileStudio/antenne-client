@@ -504,6 +504,29 @@ func (c *Client) handleMessage(raw []byte) {
 	}
 }
 
+// TransientError marks a failure the client is going to retry on its own.
+//
+// It exists because the reverse is what consumers were doing: logging every
+// failed reconnect attempt at error level. A proxy restart takes a few seconds
+// and produces three of them, so a deploy painted the dashboard red for an
+// incident that resolved itself — and a stream that cries wolf on every deploy
+// is one people learn to scroll past, which is the real cost.
+//
+// Log it at warn (or not at all) and act on the terminal error instead: the
+// client reports "max reconnection attempts reached" as a plain error once it
+// gives up, and that one means something.
+type TransientError struct {
+	// Attempt is the reconnection attempt that failed, starting at 1.
+	Attempt int
+	Err     error
+}
+
+func (e *TransientError) Error() string {
+	return fmt.Sprintf("%v (reconnect attempt %d, retrying)", e.Err, e.Attempt)
+}
+
+func (e *TransientError) Unwrap() error { return e.Err }
+
 func (c *Client) scheduleReconnect() {
 	c.mu.RLock()
 	attempt := c.reconnectAttempt
@@ -545,14 +568,14 @@ func (c *Client) scheduleReconnect() {
 	defer cancel()
 	if err := c.register(ctx); err != nil {
 		if c.onError != nil {
-			c.onError(fmt.Errorf("reconnect register: %w", err))
+			c.onError(&TransientError{Attempt: attempt + 1, Err: fmt.Errorf("reconnect register: %w", err)})
 		}
 		c.scheduleReconnect()
 		return
 	}
 	if err := c.openWebSocket(ctx); err != nil {
 		if c.onError != nil {
-			c.onError(fmt.Errorf("reconnect ws: %w", err))
+			c.onError(&TransientError{Attempt: attempt + 1, Err: fmt.Errorf("reconnect ws: %w", err)})
 		}
 		c.scheduleReconnect()
 		return

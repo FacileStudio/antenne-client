@@ -1,8 +1,10 @@
 package antenne
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -82,4 +84,33 @@ func TestDisconnectIsIdempotent(t *testing.T) {
 	c := testClient(srv.URL)
 	c.Disconnect()
 	c.Disconnect()
+}
+
+// A reconnect that the client will retry must be distinguishable from one it
+// has given up on, because the two deserve different log levels and a consumer
+// can only tell them apart if the library says so.
+func TestTransientErrorIsIdentifiableAndUnwraps(t *testing.T) {
+	cause := errors.New("registration failed: 404")
+	var err error = &TransientError{Attempt: 2, Err: cause}
+
+	var transient *TransientError
+	if !errors.As(err, &transient) {
+		t.Fatal("a retried failure is not identifiable as transient")
+	}
+	if transient.Attempt != 2 {
+		t.Fatalf("Attempt = %d, want 2", transient.Attempt)
+	}
+	if !errors.Is(err, cause) {
+		t.Fatal("the cause is not reachable through the wrapper")
+	}
+	if !strings.Contains(err.Error(), "retrying") {
+		t.Fatalf("message %q does not say it is retrying", err.Error())
+	}
+
+	// The terminal failure must NOT be transient: it is the one worth waking
+	// somebody for.
+	var terminal error = errors.New("max reconnection attempts reached")
+	if errors.As(terminal, &transient) {
+		t.Fatal("the terminal error is marked transient")
+	}
 }
