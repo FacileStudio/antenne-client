@@ -8,7 +8,7 @@ connection alive, and how the two language halves are distributed.
 ```
 Opus (TS)      ─┐
 Sablier (Go)   ─┤
-Mycelium (Go)    ─┼──▶ POST <instance>/api/antenne/register  ──▶ Antenne
+Mycelium (Go)  ─┼──▶ POST <instance>/api/antenne/register  ──▶ Antenne
                 │        └── { token, app_id }
                 │
                 └──▶ WS  <instance>/api/antenne/ws?token=…  ◀──▶ Antenne
