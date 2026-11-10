@@ -2,18 +2,33 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { parse as parseYaml } from "yaml";
 
-export interface PoolConfig {
+export * from "./envelope.js";
+export * from "./catalog.js";
+
+export interface AntenneConfig {
   app: string;
   instance: string;
   secret: string;
+  instance_id?: string;
   events?: {
     emit?: string[];
     listen?: string[];
   };
 }
 
-export interface PoolClientOptions {
-  config?: PoolConfig;
+export interface AntenneManifest {
+  app: string;
+  instance?: string;
+  secret?: string;
+  instance_id?: string;
+  events?: {
+    emit?: string[];
+    listen?: string[];
+  };
+}
+
+export interface AntenneClientOptions {
+  config?: AntenneConfig;
   configPath?: string;
   onConnect?: () => void;
   onDisconnect?: () => void;
@@ -36,21 +51,18 @@ type EventHandler<T = unknown> = (
 ) => void | Promise<void>;
 type Unsubscribe = () => void;
 
-export function loadConfig(path?: string): PoolConfig {
-  const configPath = path || findConfigFile();
-  if (!configPath) {
+export function loadConfig(path?: string): AntenneConfig {
+  const manifest = loadManifest(path);
+  if (!manifest.instance || !manifest.secret) {
     throw new Error(
-      "No nook.yaml found. Provide a config path or inline config.",
+      "antenne.yaml: 'instance' and 'secret' are required for full config. Use loadManifest() for YAML without connection details.",
     );
   }
-  const content = readFileSync(configPath, "utf-8");
-  const parsed = parseYaml(content);
-  validateConfig(parsed);
-  return parsed as PoolConfig;
+  return manifest as AntenneConfig;
 }
 
 function findConfigFile(): string | null {
-  const candidates = ["nook.yaml", "nook.yml"];
+  const candidates = ["antenne.yaml", "antenne.yml"];
   const dir = process.cwd();
 
   for (const name of candidates) {
@@ -58,24 +70,33 @@ function findConfigFile(): string | null {
     if (existsSync(full)) return full;
   }
 
-  const envPath = process.env.NOOK_CONFIG_PATH;
+  const envPath = process.env.ANTENNE_CONFIG_PATH;
   if (envPath && existsSync(envPath)) return envPath;
 
   return null;
 }
 
-function validateConfig(config: unknown): asserts config is PoolConfig {
+function validateConfig(config: unknown): asserts config is AntenneManifest {
   const c = config as Record<string, unknown>;
   if (!c.app || typeof c.app !== "string")
-    throw new Error("nook.yaml: 'app' is required");
-  if (!c.instance || typeof c.instance !== "string")
-    throw new Error("nook.yaml: 'instance' is required");
-  if (!c.secret || typeof c.secret !== "string")
-    throw new Error("nook.yaml: 'secret' is required");
+    throw new Error("antenne.yaml: 'app' is required");
 }
 
-export class PoolClient {
-  private config: PoolConfig;
+export function loadManifest(path?: string): AntenneManifest {
+  const configPath = path || findConfigFile();
+  if (!configPath) {
+    throw new Error(
+      "No antenne.yaml found. Provide a config path or inline config.",
+    );
+  }
+  const content = readFileSync(configPath, "utf-8");
+  const parsed = parseYaml(content);
+  validateConfig(parsed);
+  return parsed as AntenneManifest;
+}
+
+export class AntenneClient {
+  private config: AntenneConfig;
   private ws: WebSocket | null = null;
   private handlers: Map<string, Set<EventHandler>> = new Map();
   private offsets: Map<string, number> = new Map();
@@ -92,8 +113,9 @@ export class PoolClient {
   private _onError?: (error: Error) => void;
   private pendingMessages: string[] = [];
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private pingTimer: ReturnType<typeof setInterval> | null = null;
 
-  constructor(options: PoolClientOptions) {
+  constructor(options: AntenneClientOptions) {
     if (options.config) {
       this.config = options.config;
     } else {
@@ -117,6 +139,7 @@ export class PoolClient {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+    this.stopPinging();
     if (this.ws) {
       this.ws.close(1000, "client disconnect");
       this.ws = null;
@@ -140,6 +163,26 @@ export class PoolClient {
     }
   }
 
+  // Sends immediately or reports failure; never buffers. Callers that
+  // provide their own durability (e.g. an outbox drainer) must use this
+  // instead of emit(), whose in-memory buffering would let them mark an
+  // event as sent when it only sits in RAM.
+  emitNow<T = unknown>(channel: string, payload: T): boolean {
+    if (!this.connected || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      return false;
+    }
+    this.ws.send(
+      JSON.stringify({
+        type: "event",
+        id: crypto.randomUUID(),
+        channel,
+        payload,
+        timestamp: Date.now(),
+      }),
+    );
+    return true;
+  }
+
   listen<T = unknown>(channel: string, handler: EventHandler<T>): Unsubscribe {
     if (!this.handlers.has(channel)) {
       this.handlers.set(channel, new Set());
@@ -155,17 +198,24 @@ export class PoolClient {
     return this.connected;
   }
 
+  identity(): string {
+    return this.config.instance_id
+      ? `${this.config.app}:${this.config.instance_id}`
+      : this.config.app;
+  }
+
   get currentEpoch(): string {
     return this.epoch;
   }
 
   private async register(): Promise<void> {
-    const url = `${this.config.instance}/api/pool/register`;
+    const url = `${this.config.instance}/api/antenne/register`;
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         app: this.config.app,
+        instance_id: this.config.instance_id,
         secret: this.config.secret,
         events: this.config.events,
       }),
@@ -173,7 +223,7 @@ export class PoolClient {
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`Pool registration failed: ${res.status} ${text}`);
+      throw new Error(`Antenne registration failed: ${res.status} ${text}`);
     }
 
     const data = (await res.json()) as { token: string; app_id: string };
@@ -185,7 +235,7 @@ export class PoolClient {
     return new Promise((resolve, reject) => {
       const wsUrl =
         this.config.instance.replace(/^http/, "ws") +
-        `/api/pool/ws?token=${encodeURIComponent(this.token)}`;
+        `/api/antenne/ws?token=${encodeURIComponent(this.token)}`;
 
       this.ws = new WebSocket(wsUrl);
 
@@ -212,6 +262,7 @@ export class PoolClient {
         }
         this.pendingMessages = [];
 
+        this.startPinging();
         this._onConnect?.();
         resolve();
       };
@@ -223,6 +274,7 @@ export class PoolClient {
       this.ws.onclose = (event) => {
         const wasConnected = this.connected;
         this.connected = false;
+        this.stopPinging();
 
         if (wasConnected) {
           this._onDisconnect?.();
@@ -259,7 +311,7 @@ export class PoolClient {
 
       case "event": {
         const sender = msg.sender as string;
-        if (sender === this.config.app) return;
+        if (sender === this.identity()) return;
 
         const channel = msg.channel as string;
         const offset = msg.offset as number;
@@ -295,7 +347,7 @@ export class PoolClient {
       case "error": {
         this._onError?.(
           new Error(
-            `Pool error [${msg.code}]: ${msg.message}`,
+            `Antenne error [${msg.code}]: ${msg.message}`,
           ),
         );
         break;
@@ -303,6 +355,21 @@ export class PoolClient {
 
       case "pong":
         break;
+    }
+  }
+
+  private startPinging(): void {
+    this.stopPinging();
+    this.pingTimer = setInterval(() => {
+      if (this.ws?.readyState !== 1) return;
+      this.ws.send(JSON.stringify({ type: "ping" }));
+    }, 30_000);
+  }
+
+  private stopPinging(): void {
+    if (this.pingTimer) {
+      clearInterval(this.pingTimer);
+      this.pingTimer = null;
     }
   }
 

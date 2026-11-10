@@ -1,25 +1,24 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { parse as parseYaml } from "yaml";
+export * from "./envelope.js";
+export * from "./catalog.js";
 export function loadConfig(path) {
-    const configPath = path || findConfigFile();
-    if (!configPath) {
-        throw new Error("No nook.yaml found. Provide a config path or inline config.");
+    const manifest = loadManifest(path);
+    if (!manifest.instance || !manifest.secret) {
+        throw new Error("antenne.yaml: 'instance' and 'secret' are required for full config. Use loadManifest() for YAML without connection details.");
     }
-    const content = readFileSync(configPath, "utf-8");
-    const parsed = parseYaml(content);
-    validateConfig(parsed);
-    return parsed;
+    return manifest;
 }
 function findConfigFile() {
-    const candidates = ["nook.yaml", "nook.yml"];
+    const candidates = ["antenne.yaml", "antenne.yml"];
     const dir = process.cwd();
     for (const name of candidates) {
         const full = join(dir, name);
         if (existsSync(full))
             return full;
     }
-    const envPath = process.env.NOOK_CONFIG_PATH;
+    const envPath = process.env.ANTENNE_CONFIG_PATH;
     if (envPath && existsSync(envPath))
         return envPath;
     return null;
@@ -27,13 +26,19 @@ function findConfigFile() {
 function validateConfig(config) {
     const c = config;
     if (!c.app || typeof c.app !== "string")
-        throw new Error("nook.yaml: 'app' is required");
-    if (!c.instance || typeof c.instance !== "string")
-        throw new Error("nook.yaml: 'instance' is required");
-    if (!c.secret || typeof c.secret !== "string")
-        throw new Error("nook.yaml: 'secret' is required");
+        throw new Error("antenne.yaml: 'app' is required");
 }
-export class PoolClient {
+export function loadManifest(path) {
+    const configPath = path || findConfigFile();
+    if (!configPath) {
+        throw new Error("No antenne.yaml found. Provide a config path or inline config.");
+    }
+    const content = readFileSync(configPath, "utf-8");
+    const parsed = parseYaml(content);
+    validateConfig(parsed);
+    return parsed;
+}
+export class AntenneClient {
     constructor(options) {
         this.ws = null;
         this.handlers = new Map();
@@ -46,6 +51,7 @@ export class PoolClient {
         this.reconnectAttempt = 0;
         this.pendingMessages = [];
         this.reconnectTimer = null;
+        this.pingTimer = null;
         if (options.config) {
             this.config = options.config;
         }
@@ -68,6 +74,7 @@ export class PoolClient {
             clearTimeout(this.reconnectTimer);
             this.reconnectTimer = null;
         }
+        this.stopPinging();
         if (this.ws) {
             this.ws.close(1000, "client disconnect");
             this.ws = null;
@@ -89,6 +96,23 @@ export class PoolClient {
             this.pendingMessages.push(msg);
         }
     }
+    // Sends immediately or reports failure; never buffers. Callers that
+    // provide their own durability (e.g. an outbox drainer) must use this
+    // instead of emit(), whose in-memory buffering would let them mark an
+    // event as sent when it only sits in RAM.
+    emitNow(channel, payload) {
+        if (!this.connected || !this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            return false;
+        }
+        this.ws.send(JSON.stringify({
+            type: "event",
+            id: crypto.randomUUID(),
+            channel,
+            payload,
+            timestamp: Date.now(),
+        }));
+        return true;
+    }
     listen(channel, handler) {
         if (!this.handlers.has(channel)) {
             this.handlers.set(channel, new Set());
@@ -101,23 +125,29 @@ export class PoolClient {
     get isConnected() {
         return this.connected;
     }
+    identity() {
+        return this.config.instance_id
+            ? `${this.config.app}:${this.config.instance_id}`
+            : this.config.app;
+    }
     get currentEpoch() {
         return this.epoch;
     }
     async register() {
-        const url = `${this.config.instance}/api/pool/register`;
+        const url = `${this.config.instance}/api/antenne/register`;
         const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 app: this.config.app,
+                instance_id: this.config.instance_id,
                 secret: this.config.secret,
                 events: this.config.events,
             }),
         });
         if (!res.ok) {
             const text = await res.text();
-            throw new Error(`Pool registration failed: ${res.status} ${text}`);
+            throw new Error(`Antenne registration failed: ${res.status} ${text}`);
         }
         const data = (await res.json());
         this.token = data.token;
@@ -126,7 +156,7 @@ export class PoolClient {
     async openWebSocket() {
         return new Promise((resolve, reject) => {
             const wsUrl = this.config.instance.replace(/^http/, "ws") +
-                `/api/pool/ws?token=${encodeURIComponent(this.token)}`;
+                `/api/antenne/ws?token=${encodeURIComponent(this.token)}`;
             this.ws = new WebSocket(wsUrl);
             this.ws.onopen = () => {
                 this.connected = true;
@@ -147,6 +177,7 @@ export class PoolClient {
                     this.ws.send(msg);
                 }
                 this.pendingMessages = [];
+                this.startPinging();
                 this._onConnect?.();
                 resolve();
             };
@@ -156,6 +187,7 @@ export class PoolClient {
             this.ws.onclose = (event) => {
                 const wasConnected = this.connected;
                 this.connected = false;
+                this.stopPinging();
                 if (wasConnected) {
                     this._onDisconnect?.();
                 }
@@ -187,7 +219,7 @@ export class PoolClient {
             }
             case "event": {
                 const sender = msg.sender;
-                if (sender === this.config.app)
+                if (sender === this.identity())
                     return;
                 const channel = msg.channel;
                 const offset = msg.offset;
@@ -214,11 +246,25 @@ export class PoolClient {
                 break;
             }
             case "error": {
-                this._onError?.(new Error(`Pool error [${msg.code}]: ${msg.message}`));
+                this._onError?.(new Error(`Antenne error [${msg.code}]: ${msg.message}`));
                 break;
             }
             case "pong":
                 break;
+        }
+    }
+    startPinging() {
+        this.stopPinging();
+        this.pingTimer = setInterval(() => {
+            if (this.ws?.readyState !== 1)
+                return;
+            this.ws.send(JSON.stringify({ type: "ping" }));
+        }, 30000);
+    }
+    stopPinging() {
+        if (this.pingTimer) {
+            clearInterval(this.pingTimer);
+            this.pingTimer = null;
         }
     }
     scheduleReconnect() {
