@@ -107,6 +107,7 @@ asymmetries today, all of them real rather than accidental:
 | Behavior | TypeScript | Go |
 |---|---|---|
 | Disable reconnection | `reconnect: false` | not available |
+| Retry the first connection, without limit | not available | `WithPersistentConnect()` |
 | Read the connection epoch | `currentEpoch` getter | stored, not exported |
 | Handler throws or panics | reported via `onError` | not recovered; kills the read loop |
 | `Listen` unsubscribe | removes the exact handler | compares handler addresses; see [api.md](api.md#listen) |

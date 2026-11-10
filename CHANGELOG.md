@@ -17,10 +17,20 @@ All notable changes to this project are documented here. The format follows
   `calendar_event.created`, `calendar_event.updated` and `calendar_event.deleted`, all emitted
   by Agenda. The TypeScript mirror gains `FacileCalendar`, `FacileCalendarEvent` and the six
   `Channels` entries.
+- `WithPersistentConnect()`: the Go client retries a failed first connection with the
+  reconnect backoff instead of returning the error, never stops reconnecting, and reports every
+  failed attempt as a `*TransientError`. `Disconnect` still ends it for good. Apps that kept
+  their own dial loop around `Connect` and `WithMaxReconnect(math.MaxInt32)` can drop both.
+  The default is unchanged.
 
 ### Changed
 
 - Licence: antenne-client is now licensed under `MIT` (see `LICENSE`); before this, the repository carried no licence. The nested `go` module carries the same file, and `ts/package.json` declares `MIT`.
+
+### Fixed
+
+- A long outage no longer grows the stack: the Go reconnect loop iterates instead of calling
+  itself once per failed attempt.
 
 ## [1.0.0] - 2026-11-10
 

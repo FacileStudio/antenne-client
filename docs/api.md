@@ -150,6 +150,7 @@ Compare it with `errors.Is`.
 | `WithOnDisconnect` | `WithOnDisconnect(fn func()) ClientOption` |
 | `WithOnError` | `WithOnError(fn func(error)) ClientOption` |
 | `WithMaxReconnect` | `WithMaxReconnect(n int) ClientOption` — default 20 |
+| `WithPersistentConnect` | `WithPersistentConnect() ClientOption` — retry the first connection too, never give up |
 
 `LoadConfig` requires `app`, `instance` and `secret` together; there is no manifest-only mode.
 
@@ -179,6 +180,29 @@ The `ctx` passed to `Connect` bounds registration and the dial only. It does not
 client: the read, ping and reconnect loops run on background goroutines with their own
 contexts, and a reconnect uses a fresh 30 s context of its own. `Disconnect` is the only way to
 stop them.
+
+By default a failed `Connect` is returned to the caller and never retried, and the client stops
+reconnecting after `WithMaxReconnect` attempts with a plain `max reconnection attempts reached`
+error. `WithPersistentConnect()` changes both: when the first connection fails, `Connect`
+reports it to `WithOnError` as a `*TransientError` with `Attempt` 1, returns `nil`, and keeps
+retrying in the background with the reconnect backoff (500 ms doubling, capped at 30 s, plus up
+to 500 ms of jitter). Attempts are unlimited and every failure is a `*TransientError`.
+`Disconnect` stops the retries for good. `Connect` still returns `ErrClosed` on a closed client.
+Pair it with the outbox: queued events wait on disk, so giving up buys nothing.
+
+```go
+client := antenne.NewClient(cfg,
+	antenne.WithPersistentConnect(),
+	antenne.WithOnError(func(err error) {
+		var transient *antenne.TransientError
+		if errors.As(err, &transient) {
+			logger.Warn("antenne reconnecting", "attempt", transient.Attempt, "error", transient.Err)
+			return
+		}
+		logger.Error("antenne", "error", err)
+	}))
+_ = client.Connect(ctx)
+```
 
 There is no exported accessor for the connection epoch on the Go side, and no equivalent of
 TypeScript's `reconnect: false`.
