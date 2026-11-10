@@ -1,0 +1,11 @@
+# enveloppe: canonical event contract for the Facile Suite — types only.
+
+kind: lib
+
+ignore: [.git, node_modules, vendor, dist, build, target, testdata, .output, _app, coverage]
+extensions: [.go, .ts]
+
+disabled:
+  - gen.line.long   # gofmt owns line width
+
+failOn: error
