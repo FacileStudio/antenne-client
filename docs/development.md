@@ -6,7 +6,9 @@ Local setup for both halves, the branch layout that distribution depends on, and
 ## Prerequisites
 
 - **Bun**, for the TypeScript half. `ts/bun.lock` is committed.
-- **Go 1.24.** `go/go.mod` declares `go 1.24.0`.
+- **Go 1.26.** `go/go.mod` declares `go 1.26`.
+- **Docker or a local Postgres 16**, for the outbox tests. They read `TEST_DATABASE_URL` and skip
+  loudly without it.
 - A reachable **Antenne** instance to test against anything real. There is no mock server in this
   repo.
 
@@ -23,20 +25,25 @@ cd ../go && go mod tidy
 cd ts
 bun run build       # tsc — emits ts/dist/
 bun run typecheck   # tsc --noEmit
+bun run test        # typecheck src and test/, then bun test
 ```
 
 ```sh
 cd go
-go build ./...
 go vet ./...
+go test -race ./...
 ```
 
-There is no `mise.toml`, no `scripts/check.sh`, no lint config and no CI here — the repo
-predates the suite's chassis conventions and has not been brought onto them. There are also
-**no tests in either half**, which is worth knowing before you change reconnection or offset
-handling: nothing will catch you. The consumers' own suites are the only coverage —
-`Sablier/apps/api/modules/antenne/agent_sessions_test.go` is the closest thing to an
-integration test of this protocol.
+```sh
+docker run -d --name antenne-pg -e POSTGRES_PASSWORD=pg -p 127.0.0.1:5433:5432 postgres:16
+export TEST_DATABASE_URL='postgres://postgres:pg@127.0.0.1:5433/postgres?sslmode=disable'
+sh scripts/check.sh    # gofmt, vet, race tests, bun test, filet check
+```
+
+`scripts/check.sh` is the gate, and `lefthook.yml` runs it on pre-push. `filet.yml` holds the
+style rules. Reconnection and offset handling are still covered only by `go/antenne_test.go`
+and the consumers' own suites; the envelope, catalog, outbox and `ConfigFromEnv` have their own
+tests.
 
 ## Committed build output
 
@@ -87,8 +94,9 @@ a meaningful version number and nothing reads it.
 
 ## Keeping the two halves aligned
 
-The protocol is defined by the two implementations agreeing, and nothing checks that they do.
-When you change one, change the other in the same commit and diff them by eye. The known
+The protocol is defined by the two implementations agreeing. The envelope and the catalog are
+checked: `ts/test/parity.test.ts` reads the Go fixtures and `catalog.go`. The client behavior
+is not. When you change one client, change the other in the same commit and diff them by eye. The known
 asymmetries today, all of them real rather than accidental:
 
 | Behavior | TypeScript | Go |

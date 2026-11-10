@@ -50,6 +50,19 @@ when it points at a file that exists.
 |---|---|---|---|
 | `ANTENNE_CONFIG_PATH` | no | — | Fallback path to the YAML file, used only when no `antenne.yaml`/`antenne.yml` is in the working directory |
 
+## Environment (Go, `ConfigFromEnv`)
+
+`ConfigFromEnv(app)` builds a `Config` without a YAML file. The suite spells the URL two ways,
+so both are read.
+
+| Variable | Required | Default | What it does |
+|---|---|---|---|
+| `ANTENNE_URL` | no | — | Antenne base URL. Unset together with `ANTENNE_INSTANCE` returns `ErrNotConfigured`, meaning publishing is off |
+| `ANTENNE_INSTANCE` | no | — | Synonym for `ANTENNE_URL`, read only when `ANTENNE_URL` is empty |
+| `ANTENNE_SECRET` | when a URL is set | — | Shared secret sent at registration |
+| `ANTENNE_APP` | no | the `app` argument | Overrides the app name |
+| `ANTENNE_INSTANCE_ID` | no | — | Makes the identity `app:instance_id` |
+
 ## Full config versus manifest (TypeScript)
 
 TypeScript splits the shape in two, because in practice apps commit a `antenne.yaml` that

@@ -5,7 +5,8 @@ The complete exported surface of both implementations. Protocol behavior lives i
 
 ## TypeScript
 
-Import from `@facile/antenne`. Seven exports.
+Import from `@facile/antenne`. Seven client exports, plus the envelope and catalog contract
+described under [Envelope and catalog (TypeScript)](#envelope-and-catalog-typescript).
 
 ### Types
 
@@ -80,9 +81,29 @@ or incomplete.
 Handlers registered on the same channel run in insertion order. A synchronous throw is caught
 and routed to `onError`; the remaining handlers still run, and the event is still acked.
 
+### Envelope and catalog (TypeScript)
+
+`envelope.ts` and `catalog.ts` mirror `go/envelope` and `go/catalog`: types and constants only.
+
+| Export | Kind | Go counterpart |
+|---|---|---|
+| `FacileApp`, `FacileAction`, `FacileObjectType` | string unions | `envelope.App`, `Action`, `ObjectType` |
+| `FacileEvent<T>` | interface | `envelope.Event[T]` |
+| `FACILE_EVENT_VERSION` | `1` | `envelope.EventVersion` |
+| `FacileProject`, `FacileTask`, `FacileUser`, `FacileTimeEntry`, `FacileAgentSession`, `FacileInvoice`, `FacileDocument`, `FacileMonitor` | interfaces | the payload struct of the same name |
+| `Channels` | `as const` object | the `catalog` constants, same names |
+| `Channel` | string union of every `Channels` value | `catalog.Channel` |
+| `allChannels()` | `Channel[]`, declaration order | `catalog.All()` |
+
+`ts/test/parity.test.ts` builds one typed value per fixture in `go/envelope/testdata/` and
+asserts `JSON.stringify` equals the fixture, then checks `allChannels()` against the constants
+parsed out of `go/catalog/catalog.go`. `bun run test` typechecks the test first, so a renamed
+key fails at compile time on the TypeScript side and at the byte comparison on the Go side.
+
 ## Go
 
-Import as `pool "github.com/FacileStudio/antenne-client/go"`. Fourteen top-level exports.
+Import as `pool "github.com/FacileStudio/antenne-client/go"`. Sixteen top-level exports in the
+root package, plus the three contract packages below.
 
 ### Types
 
@@ -132,6 +153,16 @@ Compare it with `errors.Is`.
 
 `LoadConfig` requires `app`, `instance` and `secret` together; there is no manifest-only mode.
 
+| Symbol | Signature |
+|---|---|
+| `ConfigFromEnv` | `ConfigFromEnv(app string) (*Config, error)` |
+| `ErrNotConfigured` | sentinel returned by `ConfigFromEnv` when no URL is set |
+
+`ConfigFromEnv` reads the instance URL from `ANTENNE_URL`, or from `ANTENNE_INSTANCE` when
+`ANTENNE_URL` is empty, and trims a trailing `/`. `ANTENNE_APP` overrides the `app` argument.
+`ANTENNE_SECRET` and `ANTENNE_INSTANCE_ID` fill their fields. A URL without a secret or an app
+name is an error, distinct from `ErrNotConfigured`. `Events` is left empty for the caller.
+
 ### `Client`
 
 | Method | Signature | Notes |
@@ -161,6 +192,91 @@ the lifetime of the client, or gate them yourself. TypeScript's `listen` unsubsc
 
 Registering a handler after `Connect` also does not subscribe to its channel on the current
 connection — only on the next reconnect. Register handlers before connecting.
+
+## Go: `envelope`
+
+Import `github.com/FacileStudio/antenne-client/go/envelope`. The content of
+`github.com/FacileStudio/enveloppe/go`, with identical JSON keys.
+
+| Symbol | What it is |
+|---|---|
+| `App` | string type; constants `AppSablier`, `AppOpus`, `AppArdoise`, `AppPlume`, `AppGlouton`, `AppVision`, `AppMycelium`, `AppSonde`, `AppAgenda`, `AppJournal`, `AppCourrier`, `AppNuage`, `AppBulle`, `AppAntenne` |
+| `Action` | string type; `ActionCreated`, `ActionUpdated`, `ActionDeleted` |
+| `ObjectType` | string type; `ObjectProject`, `ObjectTask`, `ObjectUser`, `ObjectTimeEntry`, `ObjectInvoice`, `ObjectDocument`, `ObjectAgentSession`, `ObjectMonitor` |
+| `EventVersion` | `1`. Additive changes do not bump it |
+| `Event[T]` | `version`, `app`, `object`, `action`, `facile_id`, `payload`, `timestamp`, `idempotency_key` |
+| `Project`, `Task`, `User`, `TimeEntry`, `AgentSession`, `Invoice`, `Document`, `Monitor` | payload structs |
+
+Changing a payload means changing the struct, the TypeScript interface and the fixture in
+`go/envelope/testdata/` together. Both test suites fail until all three agree.
+
+## Go: `catalog`
+
+Import `github.com/FacileStudio/antenne-client/go/catalog`.
+
+| Symbol | What it is |
+|---|---|
+| `Channel` | string type |
+| 25 constants | one per channel, each documented with its emitter and payload type |
+| `All() []Channel` | every constant, in declaration order |
+
+The test parses `catalog.go` and fails when a constant is missing from `All()`, appears twice,
+or does not match `^[a-z][a-z_]*(\.[a-z_]+)+$`.
+
+| Channels | Emitter | Payload |
+|---|---|---|
+| `task.created`, `task.updated`, `task.deleted` | Opus, Sablier | `Event[Task]` |
+| `task.status_changed`, `task.actor_changed` | Opus | `Event[Task]` |
+| `project.created`, `project.updated`, `project.deleted` | Opus, Sablier | `Event[Project]` |
+| `time_entry.created`, `time_entry.updated`, `time_entry.deleted` | Sablier | `Event[TimeEntry]` |
+| `comment.created`, `workspace.created` | Opus | `Event` of an Opus-local payload |
+| `agent_session.created` | Mycelium | `Event[AgentSession]` |
+| `agent_session.updated` | none today; Sablier listens | `Event[AgentSession]` |
+| `usage_alert.created` | Mycelium | `Event` of a Mycelium-local payload |
+| `alert.fired` | Journal | `Event` of a map |
+| `monitor.down`, `monitor.up` | Sonde | `Event[Monitor]` |
+| `git.push`, `git.pull_request`, `git.issue`, `git.event` | Antenne git webhook | Antenne's normalized forge payload |
+| `filet.check.failed`, `filet.check.passed` | Antenne filet webhook | Antenne's normalized filet run |
+
+## Go: `outbox`
+
+Import `github.com/FacileStudio/antenne-client/go/outbox`. Depends on `database/sql` only.
+
+| Symbol | Signature | Notes |
+|---|---|---|
+| `Migration` | `string` | goose SQL, Up and Down, creating `antenne_outbox`. Copy it into your migrations |
+| `Enqueue` | `Enqueue(ctx, tx *sql.Tx, channel catalog.Channel, payload any, idempotencyKey string) error` | Call inside the business transaction |
+| `ErrDuplicate` | sentinel | The key is already queued. Uses `ON CONFLICT DO NOTHING`, so `tx` stays usable |
+| `ErrEmptyKey` | sentinel | An empty idempotency key is refused |
+| `NewDrainer` | `NewDrainer(db *sql.DB, emit func(channel string, payload any) error, opts ...Option) *Drainer` | Pass `client.EmitNow`, never `Emit` |
+| `(*Drainer).Run` | `Run(ctx context.Context)` | Drain and prune every interval until `ctx` is done |
+| `(*Drainer).Drain` | `Drain(ctx) (int, error)` | One pass; returns rows sent |
+| `(*Drainer).Prune` | `Prune(ctx) (int64, error)` | Deletes rows sent longer ago than the retention |
+| `Option` | `func(*Drainer)` | |
+| `WithInterval` | default 2 s | Pause between passes |
+| `WithBatchSize` | default 100 | Rows locked per pass |
+| `WithRetention` | default 7 days | Age at which sent rows are pruned |
+| `WithMaxBackoff` | default 1 min | Cap on the doubling pause after failed passes |
+| `WithOnError` | `func(error)` | Receives every failed pass |
+
+The table:
+
+```sql
+antenne_outbox(
+  id bigserial primary key,
+  channel text not null,
+  payload jsonb not null,
+  idempotency_key text not null unique,
+  created_at timestamptz not null default now(),
+  sent_at timestamptz
+)
+```
+
+One pass opens a transaction, selects unsent rows `ORDER BY id LIMIT n FOR UPDATE SKIP
+LOCKED`, emits each one as `json.RawMessage`, and sets `sent_at` row by row. The first emit
+failure stops the pass and commits what was sent, so that row and every later one stay unsent.
+A second drainer skips the locked rows and takes the next ones, so no row is sent twice, but
+across drainers the order is only per batch.
 
 ## Behavioral parity
 
