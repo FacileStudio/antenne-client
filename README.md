@@ -176,3 +176,7 @@ docs/  architecture, configuration, development, API reference
 
 Part of the [Facile Suite](https://facile.studio) — self-hosted tools for creative studios
 and freelancers. One login, zero cloud dependency.
+
+## License
+
+antenne-client is licensed under the [MIT License](LICENSE).

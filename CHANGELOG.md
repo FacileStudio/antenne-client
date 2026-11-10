@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Licence: antenne-client is now licensed under `MIT` (see `LICENSE`); before this, the repository carried no licence. The nested `go` module carries the same file, and `ts/package.json` declares `MIT`.
+
 ## [1.0.0] - 2026-11-10
 
 The first tagged version. This module now owns the whole wire contract: the connection, the
