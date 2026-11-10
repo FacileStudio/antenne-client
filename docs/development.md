@@ -69,8 +69,9 @@ There is no `go` branch. The Go module path ends in `/go`, so the toolchain reso
 subdirectory from the default branch directly.
 
 `ts` exists because a `github:` dependency installs the repository root, and Bun needs to find
-a `package.json` there. Its commits mirror `main`'s — the message on the current head says so
-outright: `feat: emitNow — send or fail, never buffer (mirror of main 683b8b5)`.
+a `package.json` there. Each commit on `ts` copies `ts/` from a `main` commit, minus `test/`
+(it reads `../go`), and names that commit in its message: `chore: release v1.0.0 (mirror of
+main <sha>)`. Add it on top of the current `ts` head; never force-push.
 
 **Check which branch you are on before you push.** A TypeScript change has to land on both, and
 anything that is not the TypeScript client belongs on `main` only. Docs, in particular, live on
@@ -78,19 +79,23 @@ anything that is not the TypeScript client belongs on `main` only. Docs, in part
 
 ## Releasing
 
-There is no release. Both distribution paths resolve to a git reference, so **a push is a
-publish**:
+Releases are semver git tags. The first is `1.0.0`. A release is:
 
-- A push to `ts` is picked up by the next `bun install` in any consumer, because `#ts` is a
-  branch reference and not a version. There is no way for a consumer to pin it beyond its own
-  lockfile.
-- A push to `main` does not move Go consumers, which pin a pseudo-version of a specific commit
-  (`v0.0.0-20260703193105-683b8b5581af` in both Sablier and Mycelium). They update deliberately,
-  with `go get github.com/FacileStudio/antenne-client/go@<commit>`.
+1. Move the `[Unreleased]` entries in `CHANGELOG.md` under `## [X.Y.Z] - YYYY-MM-DD`, set
+   `"version"` in `ts/package.json` to `X.Y.Z`, and commit `chore: release vX.Y.Z` on `main`.
+2. Tag that commit twice: `go/vX.Y.Z` and `vX.Y.Z`. The Go module lives in `go/`, so the Go
+   toolchain only reads the `go/`-prefixed tag; a bare `vX.Y.Z` does not version it. The bare
+   tag is for humans and the GitHub release.
+3. Mirror `ts/` onto the `ts` branch as described above.
+4. `gh release create vX.Y.Z` with the changelog section as notes.
 
-The asymmetry is worth internalizing: the same change is instant for TypeScript consumers and
-opt-in for Go ones. `ts/package.json` carries `"version": "0.1.0"` and has not moved; it is not
-a meaningful version number and nothing reads it.
+Go consumers pin a version: `go get github.com/FacileStudio/antenne-client/go@vX.Y.Z`. A push
+to `main` does not move them.
+
+TypeScript consumers still follow a branch. `#ts` is a branch reference, so a push to `ts` is
+picked up by the next `bun install` in any consumer, and only their lockfile pins it. The tags
+sit on `main`, whose root has no `package.json`, so `#vX.Y.Z` does not install. To pin, use the
+`ts` commit: `github:FacileStudio/antenne-client#<sha>`.
 
 ## Keeping the two halves aligned
 

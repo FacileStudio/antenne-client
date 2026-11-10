@@ -143,18 +143,18 @@ The consequence to keep in mind: `#ts` is a **moving branch reference**, not a v
 is no lockfile-independent way to pin it, so an install after a push to `ts` picks up new code.
 Changes to the TypeScript client are effectively published the moment they land on that branch.
 
-**Go — a commit, from the default branch.**
+**Go: a semver tag on the default branch.**
 
 ```
-require github.com/FacileStudio/antenne-client/go v0.0.0-20260703193105-683b8b5581af
+require github.com/FacileStudio/antenne-client/go v1.0.0
 ```
 
-The module path includes the `go/` subdirectory, so the Go toolchain resolves it from `main` —
-there is no `go` branch. There are no semver tags either, so consumers pin the pseudo-version
-of a specific commit. Sablier and Mycelium are both on `683b8b5`. Updating is
-`go get github.com/FacileStudio/antenne-client/go@<commit>` and a review of the diff, not a version bump.
+The module path includes the `go/` subdirectory, so the Go toolchain resolves it from `main`
+and reads tags prefixed `go/`: `go/v1.0.0` is what versions the module. Updating is
+`go get github.com/FacileStudio/antenne-client/go@vX.Y.Z`. Apps that predate `1.0.0` pin a
+pseudo-version of a commit and move when they choose to.
 
-Both distribution paths mean **a push to `main` or `ts` is a release**. See
+A push to `ts` is a release for TypeScript consumers; Go consumers move only on a tag. See
 [development.md](development.md#releasing).
 
 ## Consumers

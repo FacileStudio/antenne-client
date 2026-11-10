@@ -28,8 +28,9 @@ Apps do not talk to each other. Each one talks to Antenne, and `antenne-client` 
 
 ## Install
 
-There is no npm registry and no Go module proxy tag behind this. Both halves are consumed
-straight from GitHub — see [docs/architecture.md](docs/architecture.md#cross-repo-consumption).
+There is no npm registry. Both halves install straight from GitHub. The Go module is tagged
+`go/vX.Y.Z`; the TypeScript package follows the `ts` branch. See
+[docs/architecture.md](docs/architecture.md#cross-repo-consumption).
 
 ```sh
 bun add github:FacileStudio/antenne-client#ts
@@ -60,7 +61,7 @@ pool.listen("project.created", (payload, meta) => {
 ```
 
 ```sh
-go get github.com/FacileStudio/antenne-client/go
+go get github.com/FacileStudio/antenne-client/go@v1.0.0
 ```
 
 ```go

@@ -6,7 +6,7 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-## [1.0.0] - Unreleased
+## [1.0.0] - 2026-11-10
 
 The first tagged version. This module now owns the whole wire contract: the connection, the
 event envelope, the channel catalog and a durable outbox. No existing exported identifier
@@ -36,6 +36,8 @@ changed.
 
 - `go/go.mod` declares `go 1.26`, which the `tronc/testdb` and `tronc/migrate` test
   dependencies require. Every consumer is already on 1.26.
+- `ts/package.json` carries `"version": "1.0.0"`. Releases are tagged `go/vX.Y.Z` for the Go
+  module and `vX.Y.Z` for the repository.
 
 [Unreleased]: https://github.com/FacileStudio/antenne-client/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/FacileStudio/antenne-client/releases/tag/v1.0.0
