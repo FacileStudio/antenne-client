@@ -25,6 +25,12 @@ export const Channels = {
     GitEvent: "git.event",
     FiletCheckFailed: "filet.check.failed",
     FiletCheckPassed: "filet.check.passed",
+    CalendarCreated: "calendar.created",
+    CalendarUpdated: "calendar.updated",
+    CalendarDeleted: "calendar.deleted",
+    CalendarEventCreated: "calendar_event.created",
+    CalendarEventUpdated: "calendar_event.updated",
+    CalendarEventDeleted: "calendar_event.deleted",
 };
 /** Every channel in the catalog, in declaration order. */
 export function allChannels() {
