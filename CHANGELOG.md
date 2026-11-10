@@ -22,6 +22,9 @@ All notable changes to this project are documented here. The format follows
   failed attempt as a `*TransientError`. `Disconnect` still ends it for good. Apps that kept
   their own dial loop around `Connect` and `WithMaxReconnect(math.MaxInt32)` can drop both.
   The default is unchanged.
+- CI (`.github/workflows/ci.yml`) on push to `main` and on pull requests: gofmt, vet and
+  `go test -race` against a Postgres 16 service, `bun run test`, a rebuild that fails when the
+  committed `ts/dist/` is stale, and filet v0.19.1.
 
 ### Changed
 

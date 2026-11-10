@@ -1,0 +1,69 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  # The Go version comes from go/go.mod, so CI never builds with a toolchain
+  # older than the module declares. The outbox tests need a real Postgres and
+  # skip themselves without TEST_DATABASE_URL, which is why CI always sets it.
+  go:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: antenne
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:antenne@localhost:5432/postgres?sslmode=disable
+    defaults:
+      run:
+        working-directory: go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go/go.mod
+          cache-dependency-path: go/go.sum
+      - run: gofmt -l . | tee /dev/stderr | (! read)
+      - run: go vet ./...
+      - run: go test -race -count=1 ./...
+
+  # ts/dist is committed because a github: dependency installs no build step,
+  # so a source change whose rebuilt output was not committed ships nothing.
+  ts:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.11
+      - run: bun install --frozen-lockfile
+      - run: bun run test
+      - run: bun run build
+      - name: committed dist matches the build
+        run: git diff --exit-code -- dist && test -z "$(git status --porcelain -- dist)"
+
+  filet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: FacileStudio/filet@v0.19.1
+        with:
+          version: v0.19.1
+          fail-on: error

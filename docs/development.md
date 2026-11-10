@@ -41,9 +41,11 @@ sh scripts/check.sh    # gofmt, vet, race tests, bun test, filet check
 ```
 
 `scripts/check.sh` is the gate, and `lefthook.yml` runs it on pre-push. `filet.yml` holds the
-style rules. Reconnection and offset handling are still covered only by `go/antenne_test.go`
-and the consumers' own suites; the envelope, catalog, outbox and `ConfigFromEnv` have their own
-tests.
+style rules. `.github/workflows/ci.yml` runs the same gate on every push to `main` and every
+pull request, with a Postgres service so the outbox tests run, and also fails when `ts/dist/`
+differs from a fresh `bun run build`. Reconnection and offset handling are still covered only
+by `go/antenne_test.go` and the consumers' own suites; the envelope, catalog, outbox and
+`ConfigFromEnv` have their own tests.
 
 ## Committed build output
 
