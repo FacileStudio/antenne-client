@@ -1,6 +1,6 @@
 export type FacileApp = "Sablier" | "Opus" | "Ardoise" | "Plume" | "Glouton" | "Vision" | "Mycelium" | "Sonde" | "Agenda" | "Journal" | "Courrier" | "Nuage" | "Bulle" | "Antenne";
 export type FacileAction = "created" | "updated" | "deleted";
-export type FacileObjectType = "project" | "task" | "user" | "time_entry" | "invoice" | "document" | "agent_session" | "monitor";
+export type FacileObjectType = "project" | "task" | "user" | "time_entry" | "invoice" | "document" | "agent_session" | "monitor" | "calendar" | "calendar_event";
 export interface FacileEvent<T = unknown> {
     version: number;
     app: FacileApp;
@@ -71,4 +71,19 @@ export interface FacileMonitor {
     status: "up" | "down";
     latency_ms: number;
     error: string | null;
+}
+export interface FacileCalendar {
+    facile_id: string;
+    name: string;
+    owner_email?: string;
+    actor_email?: string;
+}
+export interface FacileCalendarEvent {
+    facile_id: string;
+    calendar_facile_id: string;
+    title: string;
+    starts_at: string;
+    ends_at: string;
+    all_day: boolean;
+    actor_email?: string;
 }

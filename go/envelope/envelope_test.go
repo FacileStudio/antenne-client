@@ -53,6 +53,13 @@ func golden() map[string]any {
 			MonitorID: "42", FacileID: "fac_mon_1", Slug: "api", Name: "API", Status: "down",
 			LatencyMS: 812, Error: ptr("connection refused"),
 		}),
+		"calendar.json": event(AppAgenda, ObjectCalendar, ActionCreated, "fac_cal_1", Calendar{
+			FacileID: "fac_cal_1", Name: "Work", OwnerEmail: "ada@example.com", ActorEmail: "ada@example.com",
+		}),
+		"calendar_event.json": event(AppAgenda, ObjectCalendarEvent, ActionUpdated, "fac_evt_1", CalendarEvent{
+			FacileID: "fac_evt_1", CalendarFacileID: "fac_cal_1", Title: "Standup",
+			StartsAt: "2026-11-12T09:00:00Z", EndsAt: "2026-11-12T09:15:00Z", AllDay: false,
+		}),
 	}
 }
 

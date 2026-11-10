@@ -6,6 +6,18 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Agenda is a publisher. `go/envelope` gains `ObjectCalendar` (`"calendar"`),
+  `ObjectCalendarEvent` (`"calendar_event"`) and the payloads `Calendar` (`facile_id`, `name`,
+  `owner_email`, `actor_email`) and `CalendarEvent` (`facile_id`, `calendar_facile_id`,
+  `title`, `starts_at`, `ends_at`, `all_day`, `actor_email`), with golden fixtures. They are
+  minimal on purpose: no description, no location, no attendee list.
+- `go/catalog` gains `calendar.created`, `calendar.updated`, `calendar.deleted`,
+  `calendar_event.created`, `calendar_event.updated` and `calendar_event.deleted`, all emitted
+  by Agenda. The TypeScript mirror gains `FacileCalendar`, `FacileCalendarEvent` and the six
+  `Channels` entries.
+
 ### Changed
 
 - Licence: antenne-client is now licensed under `MIT` (see `LICENSE`); before this, the repository carried no licence. The nested `go` module carries the same file, and `ts/package.json` declares `MIT`.

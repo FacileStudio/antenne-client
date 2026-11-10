@@ -1,0 +1,1 @@
+{"version":1,"app":"Agenda","object":"calendar","action":"created","facile_id":"fac_cal_1","payload":{"facile_id":"fac_cal_1","name":"Work","owner_email":"ada@example.com","actor_email":"ada@example.com"},"timestamp":"2026-11-10T09:30:00Z","idempotency_key":"fac_cal_1:1"}

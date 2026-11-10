@@ -7,6 +7,8 @@ import {
   type FacileAction,
   type FacileAgentSession,
   type FacileApp,
+  type FacileCalendar,
+  type FacileCalendarEvent,
   type FacileDocument,
   type FacileEvent,
   type FacileInvoice,
@@ -92,6 +94,20 @@ const golden: Record<string, FacileEvent> = {
     status: "down",
     latency_ms: 812,
     error: "connection refused",
+  }),
+  "calendar.json": event<FacileCalendar>("Agenda", "calendar", "created", "fac_cal_1", {
+    facile_id: "fac_cal_1",
+    name: "Work",
+    owner_email: "ada@example.com",
+    actor_email: "ada@example.com",
+  }),
+  "calendar_event.json": event<FacileCalendarEvent>("Agenda", "calendar_event", "updated", "fac_evt_1", {
+    facile_id: "fac_evt_1",
+    calendar_facile_id: "fac_cal_1",
+    title: "Standup",
+    starts_at: "2026-11-12T09:00:00Z",
+    ends_at: "2026-11-12T09:15:00Z",
+    all_day: false,
   }),
 };
 

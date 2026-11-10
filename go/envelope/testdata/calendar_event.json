@@ -1,0 +1,1 @@
+{"version":1,"app":"Agenda","object":"calendar_event","action":"updated","facile_id":"fac_evt_1","payload":{"facile_id":"fac_evt_1","calendar_facile_id":"fac_cal_1","title":"Standup","starts_at":"2026-11-12T09:00:00Z","ends_at":"2026-11-12T09:15:00Z","all_day":false},"timestamp":"2026-11-10T09:30:00Z","idempotency_key":"fac_evt_1:1"}

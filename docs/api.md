@@ -90,7 +90,7 @@ and routed to `onError`; the remaining handlers still run, and the event is stil
 | `FacileApp`, `FacileAction`, `FacileObjectType` | string unions | `envelope.App`, `Action`, `ObjectType` |
 | `FacileEvent<T>` | interface | `envelope.Event[T]` |
 | `FACILE_EVENT_VERSION` | `1` | `envelope.EventVersion` |
-| `FacileProject`, `FacileTask`, `FacileUser`, `FacileTimeEntry`, `FacileAgentSession`, `FacileInvoice`, `FacileDocument`, `FacileMonitor` | interfaces | the payload struct of the same name |
+| `FacileProject`, `FacileTask`, `FacileUser`, `FacileTimeEntry`, `FacileAgentSession`, `FacileInvoice`, `FacileDocument`, `FacileMonitor`, `FacileCalendar`, `FacileCalendarEvent` | interfaces | the payload struct of the same name |
 | `Channels` | `as const` object | the `catalog` constants, same names |
 | `Channel` | string union of every `Channels` value | `catalog.Channel` |
 | `allChannels()` | `Channel[]`, declaration order | `catalog.All()` |
@@ -202,10 +202,16 @@ Import `github.com/FacileStudio/antenne-client/go/envelope`. The content of
 |---|---|
 | `App` | string type; constants `AppSablier`, `AppOpus`, `AppArdoise`, `AppPlume`, `AppGlouton`, `AppVision`, `AppMycelium`, `AppSonde`, `AppAgenda`, `AppJournal`, `AppCourrier`, `AppNuage`, `AppBulle`, `AppAntenne` |
 | `Action` | string type; `ActionCreated`, `ActionUpdated`, `ActionDeleted` |
-| `ObjectType` | string type; `ObjectProject`, `ObjectTask`, `ObjectUser`, `ObjectTimeEntry`, `ObjectInvoice`, `ObjectDocument`, `ObjectAgentSession`, `ObjectMonitor` |
+| `ObjectType` | string type; `ObjectProject`, `ObjectTask`, `ObjectUser`, `ObjectTimeEntry`, `ObjectInvoice`, `ObjectDocument`, `ObjectAgentSession`, `ObjectMonitor`, `ObjectCalendar`, `ObjectCalendarEvent` |
 | `EventVersion` | `1`. Additive changes do not bump it |
 | `Event[T]` | `version`, `app`, `object`, `action`, `facile_id`, `payload`, `timestamp`, `idempotency_key` |
-| `Project`, `Task`, `User`, `TimeEntry`, `AgentSession`, `Invoice`, `Document`, `Monitor` | payload structs |
+| `Project`, `Task`, `User`, `TimeEntry`, `AgentSession`, `Invoice`, `Document`, `Monitor`, `Calendar`, `CalendarEvent` | payload structs |
+
+`Calendar` and `CalendarEvent` are deliberately minimal, because calendar data is personal.
+`Calendar` carries `facile_id`, `name`, `owner_email` and `actor_email`; `owner_email` is empty
+for a calendar a space owns. `CalendarEvent` carries `facile_id`, `calendar_facile_id`, `title`,
+`starts_at`, `ends_at` (RFC 3339 strings) and `all_day`, plus `actor_email`. Neither carries a
+description, a location or an attendee list; a consumer that needs one asks Agenda.
 
 Changing a payload means changing the struct, the TypeScript interface and the fixture in
 `go/envelope/testdata/` together. Both test suites fail until all three agree.
@@ -217,7 +223,7 @@ Import `github.com/FacileStudio/antenne-client/go/catalog`.
 | Symbol | What it is |
 |---|---|
 | `Channel` | string type |
-| 25 constants | one per channel, each documented with its emitter and payload type |
+| 31 constants | one per channel, each documented with its emitter and payload type |
 | `All() []Channel` | every constant, in declaration order |
 
 The test parses `catalog.go` and fails when a constant is missing from `All()`, appears twice,
@@ -235,6 +241,8 @@ or does not match `^[a-z][a-z_]*(\.[a-z_]+)+$`.
 | `usage_alert.created` | Mycelium | `Event` of a Mycelium-local payload |
 | `alert.fired` | Journal | `Event` of a map |
 | `monitor.down`, `monitor.up` | Sonde | `Event[Monitor]` |
+| `calendar.created`, `calendar.updated`, `calendar.deleted` | Agenda | `Event[Calendar]` |
+| `calendar_event.created`, `calendar_event.updated`, `calendar_event.deleted` | Agenda | `Event[CalendarEvent]` |
 | `git.push`, `git.pull_request`, `git.issue`, `git.event` | Antenne git webhook | Antenne's normalized forge payload |
 | `filet.check.failed`, `filet.check.passed` | Antenne filet webhook | Antenne's normalized filet run |
 

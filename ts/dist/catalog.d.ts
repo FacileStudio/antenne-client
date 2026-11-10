@@ -25,6 +25,12 @@ export declare const Channels: {
     readonly GitEvent: "git.event";
     readonly FiletCheckFailed: "filet.check.failed";
     readonly FiletCheckPassed: "filet.check.passed";
+    readonly CalendarCreated: "calendar.created";
+    readonly CalendarUpdated: "calendar.updated";
+    readonly CalendarDeleted: "calendar.deleted";
+    readonly CalendarEventCreated: "calendar_event.created";
+    readonly CalendarEventUpdated: "calendar_event.updated";
+    readonly CalendarEventDeleted: "calendar_event.deleted";
 };
 /** The name of one Antenne bus channel, as in "task.created". */
 export type Channel = (typeof Channels)[keyof typeof Channels];
