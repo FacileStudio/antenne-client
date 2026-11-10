@@ -1,3 +1,5 @@
+export * from "./envelope.js";
+export * from "./catalog.js";
 export interface AntenneConfig {
     app: string;
     instance: string;
@@ -73,4 +75,3 @@ export declare class AntenneClient {
     private stopPinging;
     private scheduleReconnect;
 }
-export {};

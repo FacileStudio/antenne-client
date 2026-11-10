@@ -2,6 +2,9 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { parse as parseYaml } from "yaml";
 
+export * from "./envelope.js";
+export * from "./catalog.js";
+
 export interface AntenneConfig {
   app: string;
   instance: string;
