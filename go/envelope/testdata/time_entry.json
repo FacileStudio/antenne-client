@@ -1,0 +1,1 @@
+{"version":1,"app":"Sablier","object":"time_entry","action":"created","facile_id":"fac_te_1","payload":{"facile_id":"fac_te_1","task_facile_id":"fac_tsk_1","user_facile_id":"fac_usr_1","user_email":"ada@example.com","started_at":"2026-11-10T08:00:00Z","stopped_at":null},"timestamp":"2026-11-10T09:30:00Z","idempotency_key":"fac_te_1:1"}

@@ -1,0 +1,1 @@
+{"version":1,"app":"Sablier","object":"user","action":"created","facile_id":"fac_usr_1","payload":{"facile_id":"fac_usr_1","email":"ada@example.com","name":"Ada"},"timestamp":"2026-11-10T09:30:00Z","idempotency_key":"fac_usr_1:1"}

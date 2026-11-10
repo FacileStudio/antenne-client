@@ -1,0 +1,1 @@
+{"version":1,"app":"Sonde","object":"monitor","action":"updated","facile_id":"fac_mon_1","payload":{"monitor_id":"42","facile_id":"fac_mon_1","slug":"api","name":"API","status":"down","latency_ms":812,"error":"connection refused"},"timestamp":"2026-11-10T09:30:00Z","idempotency_key":"fac_mon_1:1"}

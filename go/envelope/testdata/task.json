@@ -1,0 +1,1 @@
+{"version":1,"app":"Opus","object":"task","action":"updated","facile_id":"fac_tsk_1","payload":{"facile_id":"fac_tsk_1","project_facile_id":"fac_prj_1","name":"Write docs","status":"doing"},"timestamp":"2026-11-10T09:30:00Z","idempotency_key":"fac_tsk_1:1"}
