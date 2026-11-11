@@ -6,6 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-11
+
+### Fixed
+
+- `go/go.mod` declares `go 1.26.11`, clearing the Go stdlib and toolchain advisories fixed in
+  that release. Consumers need Go 1.26.11 or later.
+- `golang.org/x/text` v0.41.0 (GO-2026-6629).
+
 ## [1.1.0] - 2026-11-10
 
 ### Added
@@ -70,6 +78,7 @@ changed.
 - `ts/package.json` carries `"version": "1.0.0"`. Releases are tagged `go/vX.Y.Z` for the Go
   module and `vX.Y.Z` for the repository.
 
-[Unreleased]: https://github.com/FacileStudio/antenne-client/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/FacileStudio/antenne-client/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/FacileStudio/antenne-client/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/FacileStudio/antenne-client/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/FacileStudio/antenne-client/releases/tag/v1.0.0
