@@ -23,7 +23,7 @@ Apps do not talk to each other. Each one talks to Antenne, and `antenne-client` 
 | Layer | Tech |
 |---|---|
 | Runtime | TypeScript 5, ES2020/NodeNext, `yaml` ^2.7.1, the platform `WebSocket` and `fetch` |
-| Runtime | Go 1.26, `github.com/gorilla/websocket` v1.5.3, `gopkg.in/yaml.v3` v3.0.1, `database/sql` for the outbox |
+| Runtime | Go 1.26.11, `github.com/gorilla/websocket` v1.5.3, `gopkg.in/yaml.v3` v3.0.1, `database/sql` for the outbox |
 | Tests | `go test -race`, `tronc/testdb` against real Postgres, `bun test` |
 
 ## Install

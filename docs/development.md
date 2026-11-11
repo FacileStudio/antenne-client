@@ -6,7 +6,7 @@ Local setup for both halves, the branch layout that distribution depends on, and
 ## Prerequisites
 
 - **Bun**, for the TypeScript half. `ts/bun.lock` is committed.
-- **Go 1.26.** `go/go.mod` declares `go 1.26`.
+- **Go 1.26.11.** `go/go.mod` declares `go 1.26.11`.
 - **Docker or a local Postgres 16**, for the outbox tests. They read `TEST_DATABASE_URL` and skip
   loudly without it.
 - A reachable **Antenne** instance to test against anything real. There is no mock server in this
