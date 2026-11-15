@@ -31,6 +31,9 @@ export const Channels = {
     CalendarEventCreated: "calendar_event.created",
     CalendarEventUpdated: "calendar_event.updated",
     CalendarEventDeleted: "calendar_event.deleted",
+    CallStarted: "call.started",
+    CallUpdated: "call.updated",
+    CallEnded: "call.ended",
 };
 /** Every channel in the catalog, in declaration order. */
 export function allChannels() {

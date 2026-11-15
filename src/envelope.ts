@@ -12,7 +12,8 @@ export type FacileApp =
   | "Courrier"
   | "Nuage"
   | "Bulle"
-  | "Antenne";
+  | "Antenne"
+  | "Echo";
 
 export type FacileAction = "created" | "updated" | "deleted";
 
@@ -26,7 +27,8 @@ export type FacileObjectType =
   | "agent_session"
   | "monitor"
   | "calendar"
-  | "calendar_event";
+  | "calendar_event"
+  | "call";
 
 export interface FacileEvent<T = unknown> {
   version: number;
@@ -124,4 +126,14 @@ export interface FacileCalendarEvent {
   ends_at: string;
   all_day: boolean;
   actor_email?: string;
+}
+
+export interface FacileCall {
+  facile_id: string;
+  room_slug: string;
+  room_name: string;
+  started_at: string;
+  ended_at: string | null;
+  participant_emails: string[];
+  url?: string;
 }

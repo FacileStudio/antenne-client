@@ -1,6 +1,6 @@
-export type FacileApp = "Sablier" | "Opus" | "Ardoise" | "Plume" | "Glouton" | "Vision" | "Mycelium" | "Sonde" | "Agenda" | "Journal" | "Courrier" | "Nuage" | "Bulle" | "Antenne";
+export type FacileApp = "Sablier" | "Opus" | "Ardoise" | "Plume" | "Glouton" | "Vision" | "Mycelium" | "Sonde" | "Agenda" | "Journal" | "Courrier" | "Nuage" | "Bulle" | "Antenne" | "Echo";
 export type FacileAction = "created" | "updated" | "deleted";
-export type FacileObjectType = "project" | "task" | "user" | "time_entry" | "invoice" | "document" | "agent_session" | "monitor" | "calendar" | "calendar_event";
+export type FacileObjectType = "project" | "task" | "user" | "time_entry" | "invoice" | "document" | "agent_session" | "monitor" | "calendar" | "calendar_event" | "call";
 export interface FacileEvent<T = unknown> {
     version: number;
     app: FacileApp;
@@ -86,4 +86,13 @@ export interface FacileCalendarEvent {
     ends_at: string;
     all_day: boolean;
     actor_email?: string;
+}
+export interface FacileCall {
+    facile_id: string;
+    room_slug: string;
+    room_name: string;
+    started_at: string;
+    ended_at: string | null;
+    participant_emails: string[];
+    url?: string;
 }
