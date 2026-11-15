@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Echo is a publisher. `go/envelope` gains `AppEcho` (`"Echo"`), `ObjectCall` (`"call"`) and the
+  payload `Call` (`facile_id`, `room_slug`, `room_name`, `started_at`, `ended_at`,
+  `participant_emails`, `url`), with a golden fixture. `ended_at` is `null` while the call is
+  live; `participant_emails` holds signed-in participants only, lowercase, never guests.
+- `go/catalog` gains `call.started`, `call.updated` (participant set changed) and `call.ended`,
+  emitted by Echo. The TypeScript mirror gains `"Echo"`, `"call"`, `FacileCall` and the three
+  `Channels` entries.
+
 ## [1.1.1] - 2026-11-11
 
 ### Fixed

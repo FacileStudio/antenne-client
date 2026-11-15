@@ -9,6 +9,7 @@ import {
   type FacileApp,
   type FacileCalendar,
   type FacileCalendarEvent,
+  type FacileCall,
   type FacileDocument,
   type FacileEvent,
   type FacileInvoice,
@@ -108,6 +109,15 @@ const golden: Record<string, FacileEvent> = {
     starts_at: "2026-11-12T09:00:00Z",
     ends_at: "2026-11-12T09:15:00Z",
     all_day: false,
+  }),
+  "call.json": event<FacileCall>("Echo", "call", "created", "42", {
+    facile_id: "42",
+    room_slug: "standup",
+    room_name: "Standup",
+    started_at: "2026-11-12T09:00:00Z",
+    ended_at: null,
+    participant_emails: ["ada@example.com"],
+    url: "https://echo.facile.studio/calls/42",
   }),
 };
 

@@ -60,6 +60,10 @@ func golden() map[string]any {
 			FacileID: "fac_evt_1", CalendarFacileID: "fac_cal_1", Title: "Standup",
 			StartsAt: "2026-11-12T09:00:00Z", EndsAt: "2026-11-12T09:15:00Z", AllDay: false,
 		}),
+		"call.json": event(AppEcho, ObjectCall, ActionCreated, "42", Call{
+			FacileID: "42", RoomSlug: "standup", RoomName: "Standup", StartedAt: "2026-11-12T09:00:00Z",
+			EndedAt: nil, ParticipantEmails: []string{"ada@example.com"}, URL: "https://echo.facile.studio/calls/42",
+		}),
 	}
 }
 

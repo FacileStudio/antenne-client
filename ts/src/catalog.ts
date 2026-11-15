@@ -31,6 +31,9 @@ export const Channels = {
   CalendarEventCreated: "calendar_event.created",
   CalendarEventUpdated: "calendar_event.updated",
   CalendarEventDeleted: "calendar_event.deleted",
+  CallStarted: "call.started",
+  CallUpdated: "call.updated",
+  CallEnded: "call.ended",
 } as const;
 
 /** The name of one Antenne bus channel, as in "task.created". */

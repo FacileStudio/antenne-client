@@ -31,6 +31,9 @@ export declare const Channels: {
     readonly CalendarEventCreated: "calendar_event.created";
     readonly CalendarEventUpdated: "calendar_event.updated";
     readonly CalendarEventDeleted: "calendar_event.deleted";
+    readonly CallStarted: "call.started";
+    readonly CallUpdated: "call.updated";
+    readonly CallEnded: "call.ended";
 };
 /** The name of one Antenne bus channel, as in "task.created". */
 export type Channel = (typeof Channels)[keyof typeof Channels];

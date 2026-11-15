@@ -1,0 +1,1 @@
+{"version":1,"app":"Echo","object":"call","action":"created","facile_id":"42","payload":{"facile_id":"42","room_slug":"standup","room_name":"Standup","started_at":"2026-11-12T09:00:00Z","ended_at":null,"participant_emails":["ada@example.com"],"url":"https://echo.facile.studio/calls/42"},"timestamp":"2026-11-10T09:30:00Z","idempotency_key":"42:1"}
